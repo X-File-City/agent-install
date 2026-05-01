@@ -56,6 +56,20 @@ The CLI imports the library using relative paths (e.g. `../../../mcp/index.ts`).
 
 `pnpm build` must complete before `pnpm test` or `pnpm lint`. After modifying source files, always rebuild before running tests.
 
+### Releasing
+
+Releases are driven by [changesets](https://github.com/changesets/changesets). Every user-facing change must ship with a changeset:
+
+```bash
+pnpm changeset
+```
+
+Pick the affected package(s) and the bump kind (`patch` / `minor` / `major`). Commit the generated `.changeset/*.md` file with your PR. On merge to `main`, the **Release** GitHub Action opens (or updates) a `chore: release` PR. Merging that PR publishes to npm and tags the git release. Never edit `package.json` versions or `CHANGELOG.md` by hand.
+
+### CI
+
+Every PR and push to `main` runs `pnpm build && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test` via `.github/workflows/ci.yml`. All gates must pass before merge.
+
 ## How the three surfaces work
 
 **Skills**: a **source** is parsed (local path / GitHub / URL), remote sources are shallow-cloned into temp, `SKILL.md` files are discovered and copied into `.agents/skills/<name>`, and each selected agent gets either a relative symlink (with copy fallback) or a direct copy.

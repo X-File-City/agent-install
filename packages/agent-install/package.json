@@ -24,6 +24,10 @@
     "bin",
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
