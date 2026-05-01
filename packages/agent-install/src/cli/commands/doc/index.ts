@@ -6,7 +6,8 @@ import { docRemoveSectionCommand } from "./remove-section.ts";
 import { docSetSectionCommand } from "./set-section.ts";
 import { docSymlinkClaudeCommand } from "./symlink-claude.ts";
 
-export const docCommand = new Command("doc")
+export const docCommand = new Command("agents-md")
+  .alias("doc")
   .description("Manage AGENTS.md / CLAUDE.md / GEMINI.md / Cursor rules")
   .addCommand(docInitCommand)
   .addCommand(docReadCommand)

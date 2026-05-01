@@ -1,4 +1,4 @@
-# agent-install
+# <img src="https://github.com/millionco/agent-install/blob/main/.github/assets/logo.svg?raw=true" width="40" align="center" /> agent-install
 
 [![version](https://img.shields.io/npm/v/agent-install?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
 [![downloads](https://img.shields.io/npm/dt/agent-install.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
@@ -24,10 +24,18 @@ npm install agent-install
 Or use the CLI directly without installing:
 
 ```bash
-npx agent-install --help
+npx agent-install@latest --help
 ```
 
 ## Quick start
+
+```bash
+npx agent-install@latest skill add owner/repo -a cursor
+npx agent-install@latest mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install@latest agents-md set-section "Testing" --body "Run pnpm test"
+```
+
+Same three actions from the Node API:
 
 ```ts
 import { skill, mcp, agentsMd } from "agent-install";
@@ -35,14 +43,6 @@ import { skill, mcp, agentsMd } from "agent-install";
 await skill.add({ source: "owner/repo", agents: ["cursor"] });
 mcp.add({ source: "https://mcp.context7.com/mcp", agents: ["cursor"], name: "context7" });
 agentsMd.setSection({ heading: "Testing", body: "Run pnpm test" });
-```
-
-Same three actions from the CLI:
-
-```bash
-npx agent-install skill add owner/repo -a cursor
-npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
-npx agent-install doc set-section "Testing" --body "Run pnpm test"
 ```
 
 The Node API is namespaced by surface (`skill`, `mcp`, `agentsMd`) using verbs that match the CLI (`add`, `list`, `remove`, `setSection`, `removeSection`, `read`).
@@ -54,33 +54,33 @@ A thin wrapper around the Node API for one-off installs, scripts, and CI.
 ### Skills
 
 ```bash
-npx agent-install skill add ./skills/react-grab
-npx agent-install skill add owner/repo
-npx agent-install skill add https://github.com/owner/repo/tree/main/skills/foo
+npx agent-install@latest skill add ./skills/react-grab
+npx agent-install@latest skill add owner/repo
+npx agent-install@latest skill add https://github.com/owner/repo/tree/main/skills/foo
 
-npx agent-install skill init [name]      # create a new SKILL.md
-npx agent-install skill list             # list installed skills
-npx agent-install skill remove [skills]  # remove installed skills
+npx agent-install@latest skill init [name]      # create a new SKILL.md
+npx agent-install@latest skill list             # list installed skills
+npx agent-install@latest skill remove [skills]  # remove installed skills
 ```
 
 ### MCP servers
 
 ```bash
-npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
-npx agent-install mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
+npx agent-install@latest mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install@latest mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
 
-npx agent-install mcp list           # list installed MCP servers
-npx agent-install mcp remove <name>  # remove by server name
+npx agent-install@latest mcp list           # list installed MCP servers
+npx agent-install@latest mcp remove <name>  # remove by server name
 ```
 
 ### AGENTS.md
 
 ```bash
-npx agent-install doc init
-npx agent-install doc set-section "Testing" --body "Run pnpm test"
-npx agent-install doc remove-section "Testing"
-npx agent-install doc symlink-claude
-npx agent-install doc read
+npx agent-install@latest agents-md init
+npx agent-install@latest agents-md set-section "Testing" --body "Run pnpm test"
+npx agent-install@latest agents-md remove-section "Testing"
+npx agent-install@latest agents-md symlink-claude
+npx agent-install@latest agents-md read
 ```
 
 ## Node API

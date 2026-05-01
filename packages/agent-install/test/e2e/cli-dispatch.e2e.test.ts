@@ -5,7 +5,7 @@ import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 import { PACKAGE_ROOT, runCli } from "./helpers.ts";
 
 describe("CLI dispatch", () => {
-  it("prints top-level help listing skill, mcp, doc groups", async () => {
+  it("prints top-level help listing skill, mcp, agents-md groups", async () => {
     const result = await runCli(["--help"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("agent-install");
@@ -14,7 +14,7 @@ describe("CLI dispatch", () => {
     expect(result.stdout).toContain("AGENTS.md / CLAUDE.md");
     expect(result.stdout).toMatch(/skill\s/);
     expect(result.stdout).toMatch(/mcp\s/);
-    expect(result.stdout).toMatch(/doc\s/);
+    expect(result.stdout).toMatch(/agents-md/);
   });
 
   it("prints version from package.json", async () => {
@@ -32,7 +32,7 @@ describe("CLI dispatch", () => {
     expect(result.stderr.length + result.stdout.length).toBeGreaterThan(0);
   });
 
-  it("shows per-subcommand help for each of skill/mcp/doc", async () => {
+  it("shows per-subcommand help for each of skill/mcp/agents-md", async () => {
     const subcommands = [
       {
         group: "skill",
@@ -43,7 +43,7 @@ describe("CLI dispatch", () => {
         mustContain: ["add", "list", "remove"],
       },
       {
-        group: "doc",
+        group: "agents-md",
         mustContain: ["init", "read", "set-section", "remove-section", "symlink-claude"],
       },
     ];
@@ -64,5 +64,13 @@ describe("CLI dispatch", () => {
     expect(result.stdout).toContain("--skill");
     expect(result.stdout).toContain("--global");
     expect(result.stdout).toContain("--copy");
+  });
+
+  it("accepts the legacy `doc` alias for the agents-md group", async () => {
+    const result = await runCli(["doc", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("init");
+    expect(result.stdout).toContain("read");
+    expect(result.stdout).toContain("set-section");
   });
 });

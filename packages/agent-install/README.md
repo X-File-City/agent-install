@@ -5,7 +5,7 @@ Install `SKILL.md` files, MCP servers, and `AGENTS.md` guidance for any AI codin
 ```bash
 pnpm add agent-install
 # or, as a one-shot CLI
-npx agent-install <skill|mcp|doc> <action>
+npx agent-install@latest <skill|mcp|agents-md> <action>
 ```
 
 ## Node API
@@ -113,7 +113,7 @@ agent-install mcp <action>
   list                           -g, -a, --json
   remove <name>                  -g, -a, -y
 
-agent-install doc <action>
+agent-install agents-md <action>      (alias: doc)
   init                           [--agent <agent>]
   read                           [--agent <agent>] [-f <file>] [--json]
   set-section <heading>          --body | --body-file, --placement, --level, --agent, -f

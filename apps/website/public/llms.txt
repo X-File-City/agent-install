@@ -1,0 +1,202 @@
+# agent-install
+
+Install agent skills and MCPs with one API.
+
+`agent-install` is a Node API and CLI for installing the three things every AI coding agent consumes:
+
+- **Skills** — `SKILL.md` files that trigger agent behavior, copied or symlinked into each agent's skills directory
+- **MCP servers** — Model Context Protocol servers, written into each agent's native config (JSON, JSONC, YAML, or TOML) with per-agent transforms
+- **AGENTS.md** — sectioned guidance for [agents.md](https://agents.md/) and per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`)
+
+Works with Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Goose, Windsurf, Roo, Cline, Kilo, Claude Desktop, VS Code, Zed, Antigravity, MCPorter, Aider, and 25+ other agents.
+
+## Install
+
+As a library:
+
+```bash
+npm install agent-install
+```
+
+Or use the CLI directly without installing:
+
+```bash
+npx agent-install@latest --help
+```
+
+## Quick start
+
+```ts
+import { skill, mcp, agentsMd } from "agent-install";
+
+await skill.add({ source: "owner/repo", agents: ["cursor"] });
+mcp.add({ source: "https://mcp.context7.com/mcp", agents: ["cursor"], name: "context7" });
+agentsMd.setSection({ heading: "Testing", body: "Run pnpm test" });
+```
+
+Same three actions from the CLI:
+
+```bash
+npx agent-install@latest skill add owner/repo -a cursor
+npx agent-install@latest mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install@latest agents-md set-section "Testing" --body "Run pnpm test"
+```
+
+The Node API is namespaced by surface (`skill`, `mcp`, `agentsMd`) using verbs that match the CLI (`add`, `list`, `remove`, `setSection`, `removeSection`, `read`).
+
+## Skills
+
+A skill is a `SKILL.md` file an agent picks up to trigger behavior. `skill.add` parses a source (local path, GitHub repo, GitLab repo, SSH URL, or any git remote), fetches it, and installs every discovered `SKILL.md` into each selected agent.
+
+```ts
+import { skill } from "agent-install";
+
+const result = await skill.add({
+  source: "./skills/react-grab",
+  agents: ["claude-code", "cursor"],
+});
+
+result.installed; // InstalledSkillRecord[]
+result.failed;    // FailedSkillRecord[]
+```
+
+Other useful exports:
+
+- `skill.discover(dir)` — find SKILL.md files in a directory
+- `skill.parseSource(spec)` — parse a source string into a `ParsedSkillSource`
+- `skill.detectInstalledSkillAgents()`
+- `skill.installSkillForAgent(skill, agent, opts)`
+
+CLI:
+
+```bash
+npx agent-install@latest skill add ./skills/react-grab
+npx agent-install@latest skill add owner/repo
+npx agent-install@latest skill add https://github.com/owner/repo/tree/main/skills/foo
+
+npx agent-install@latest skill init [name]      # create a new SKILL.md
+npx agent-install@latest skill list             # list installed skills
+npx agent-install@latest skill remove [skills]  # remove installed skills
+```
+
+### Skill source formats
+
+```
+./skills/my-skill                             # local path
+/abs/path/to/skill                            # absolute path
+owner/repo                                    # GitHub shorthand
+owner/repo/path/to/skill                      # with subpath
+owner/repo@skill-name                         # with skill filter
+owner/repo#branch                             # with git ref
+github:owner/repo                             # explicit prefix
+https://github.com/owner/repo                 # full URL
+https://github.com/owner/repo/tree/main/skills/foo
+gitlab:owner/repo                             # GitLab shorthand
+https://gitlab.com/owner/repo
+https://gitlab.com/owner/repo/-/tree/main/skills/foo
+git@github.com:owner/repo.git                 # SSH (preserves URL for clone)
+git@gitlab.com:owner/repo.git
+git@github.com:owner/repo.git#main@my-skill   # with ref + skill filter
+https://git.example.com/owner/repo.git        # any git remote
+git@bitbucket.org:owner/repo.git
+https://example.com/path/SKILL.md             # direct SKILL.md URL
+```
+
+## MCP servers
+
+`mcp.add` parses a source (remote URL, npm package, or raw command), builds an `McpServerConfig`, and writes it into each selected agent's native config file. JSONC writes preserve existing comments.
+
+```ts
+import { mcp } from "agent-install";
+
+mcp.add({
+  source: "https://mcp.context7.com/mcp",
+  agents: ["cursor", "claude-code"],
+  name: "context7",
+});
+
+mcp.add({
+  source: "@modelcontextprotocol/server-postgres",
+  agents: ["claude-code"],
+  name: "postgres",
+  env: { DATABASE_URL: process.env.DATABASE_URL ?? "" },
+});
+
+mcp.list({ agents: ["cursor"] });
+mcp.remove({ name: "context7", agents: ["cursor"] });
+```
+
+CLI:
+
+```bash
+npx agent-install@latest mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install@latest mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
+
+npx agent-install@latest mcp list           # list installed MCP servers
+npx agent-install@latest mcp remove <name>  # remove by server name
+```
+
+### MCP source formats
+
+```
+https://mcp.context7.com/mcp                  # remote HTTP
+https://mcp.example.com/sse (+ transport: "sse")
+@modelcontextprotocol/server-postgres         # npm package (wrapped in npx -y)
+"node /path/to/server.js --port 3000"         # raw command
+```
+
+## AGENTS.md
+
+`agentsMd` reads, upserts, and removes sections in [AGENTS.md](https://agents.md/) and its per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`) without losing surrounding content.
+
+```ts
+import { agentsMd } from "agent-install";
+
+agentsMd.setSection({
+  heading: "React Grab",
+  body: "Run `npx grab@latest` to set up React Grab.",
+  placement: "append",
+});
+
+agentsMd.removeSection({ heading: "Old section" });
+await agentsMd.symlinkClaude();
+```
+
+Other useful exports:
+
+- `agentsMd.read({ agent: "cursor" })`
+- `agentsMd.write({ content: "..." })`
+- `agentsMd.parseSections(content)`
+- `agentsMd.findSection(sections, "Testing")`
+- `agentsMd.resolveAgentsMdFilePath({ agent: "claude-code" })`
+
+CLI:
+
+```bash
+npx agent-install@latest agents-md init
+npx agent-install@latest agents-md set-section "Testing" --body "Run pnpm test"
+npx agent-install@latest agents-md remove-section "Testing"
+npx agent-install@latest agents-md symlink-claude
+npx agent-install@latest agents-md read
+```
+
+## Subpath exports
+
+| Import                    | Surface                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `agent-install`           | All three surfaces as `skill`, `mcp`, `agentsMd` namespaces (+ flat skill exports) |
+| `agent-install/skill`     | Skill surface only                                                                 |
+| `agent-install/mcp`       | MCP surface only                                                                   |
+| `agent-install/agents-md` | AGENTS.md surface (kebab-case path, import as `agentsMd`)                          |
+
+Long-form aliases: `skill.add` is `skill.installSkillsFromSource`, `mcp.add` is `mcp.installMcpServer`, `agentsMd.setSection` is `agentsMd.upsertAgentsMdSection`.
+
+## Source
+
+- Repository: https://github.com/millionco/agent-install
+- npm: https://www.npmjs.com/package/agent-install
+- Issues: https://github.com/millionco/agent-install/issues
+
+## License
+
+MIT.
