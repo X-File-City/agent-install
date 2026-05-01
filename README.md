@@ -271,7 +271,7 @@ agent-install is MIT-licensed open-source software.
 
 Prior work that inspired and informed `agent-install`:
 
-- [vercel-labs/skills](https://github.com/vercel-labs/skills) — the Agent Skills specification and reference skills.
+- [vercel-labs/skills](https://github.com/vercel-labs/skills) - the Agent Skills specification and reference skills.
 - [neondatabase/add-mcp](https://github.com/neondatabase/add-mcp) - one-shot MCP server installer across coding agents.
 - [supermemoryai/install-mcp](https://github.com/supermemoryai/install-mcp) - MCP installer CLI with OAuth and multi-client support.
 - [ahmadawais/add-skill](https://github.com/ahmadawais/add-skill) - installing agent skills from any git repository.
