@@ -1,6 +1,6 @@
 {
   "name": "agent-install",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Install SKILL.md files, MCP servers, and AGENTS.md guidance for any coding agent. Ships both a Node API and a CLI.",
   "keywords": [
     "agent",
@@ -51,8 +51,7 @@
     }
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "scripts": {
     "dev": "vp pack --watch",
