@@ -7,7 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@agent-install/website"
-  ]
+  "ignore": ["@agent-install/website"]
 }
