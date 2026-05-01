@@ -1,5 +1,11 @@
 # agent-install
 
+## 0.0.2
+
+### Patch Changes
+
+- fix
+
 ## 0.1.0
 
 ### Minor Changes
@@ -8,6 +14,7 @@
 
   Single package shipping a Node library and a CLI that install three things every
   AI coding agent consumes:
+
   - **Skills** — `SKILL.md` files discovered and symlinked (or copied) into each
     agent's skills directory, with a canonical copy at `.agents/skills/<name>`.
   - **MCP servers** — written into each agent's native config file across JSON
@@ -25,6 +32,7 @@
   close a hostname-spoofing parser bug.
 
   **API**
+
   - New top-level namespace exports: `import { skill, mcp, agentsMd } from "agent-install"`.
     Each surface gets short verbs that mirror the CLI: `skill.add`, `mcp.add`,
     `mcp.list`, `mcp.remove`, `agentsMd.setSection`, `agentsMd.removeSection`,
@@ -33,6 +41,7 @@
     etc.) are kept as aliases.
 
   **Sources**
+
   - Skills can now be installed from GitLab as a first-class source: full GitLab
     repo URLs, `/-/tree/<ref>/<subpath>` URLs, the `gitlab:owner/repo` shorthand
     prefix (with subpath / `@filter` / `#ref` modifiers), and SSH URLs to
@@ -42,6 +51,7 @@
     `gitlab` value on `SkillSourceType`.
 
   **Bug fix**
+
   - HTTPS source parsing no longer mis-parses lookalike domains. Inputs like
     `https://example-github.com/owner/repo` and `https://my-github.com/owner/repo/tree/main`
     used to be silently rewritten to `https://github.com/owner/repo.git`; they now
