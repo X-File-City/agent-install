@@ -106,16 +106,16 @@ const result = await skill.add({
 });
 
 result.installed; // InstalledSkillRecord[]
-result.failed;    // FailedSkillRecord[]
+result.failed; // FailedSkillRecord[]
 ```
 
 Other useful exports:
 
 ```ts
-skill.discover(dir)        // find SKILL.md files in a directory
-skill.parseSource(spec)    // parse a source string into a ParsedSkillSource
-skill.detectInstalledSkillAgents()
-skill.installSkillForAgent(skill, agent, opts)
+skill.discover(dir); // find SKILL.md files in a directory
+skill.parseSource(spec); // parse a source string into a ParsedSkillSource
+skill.detectInstalledSkillAgents();
+skill.installSkillForAgent(skill, agent, opts);
 ```
 
 ### MCP servers
@@ -145,9 +145,9 @@ mcp.remove({ name: "context7", agents: ["cursor"] });
 Other useful exports:
 
 ```ts
-mcp.parseSource(spec)
-mcp.buildMcpServerConfig(parsed, opts)
-mcp.installMcpServerForAgent(name, config, agent, opts)
+mcp.parseSource(spec);
+mcp.buildMcpServerConfig(parsed, opts);
+mcp.installMcpServerForAgent(name, config, agent, opts);
 ```
 
 ### AGENTS.md
@@ -170,11 +170,11 @@ await agentsMd.symlinkClaude();
 Other useful exports:
 
 ```ts
-agentsMd.read({ agent: "cursor" })
-agentsMd.write({ content: "..." })
-agentsMd.parseSections(content)
-agentsMd.findSection(sections, "Testing")
-agentsMd.resolveAgentsMdFilePath({ agent: "claude-code" })
+agentsMd.read({ agent: "cursor" });
+agentsMd.write({ content: "..." });
+agentsMd.parseSections(content);
+agentsMd.findSection(sections, "Testing");
+agentsMd.resolveAgentsMdFilePath({ agent: "claude-code" });
 ```
 
 ### Subpath exports
