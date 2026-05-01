@@ -7,12 +7,6 @@ Install agent skills and MCPs with one API.
 
 Works with Claude Code, Cursor, Codex, OpenCode, and 40+ other coding agents. Writes to each one's native config (skills directory, MCP JSON/JSONC/YAML/TOML, AGENTS.md) so your CLI or build script doesn't have to learn ten different formats. A small `agent-install` CLI is also included for one-off use.
 
-<p align="center">
-  <img src="https://github.com/aidenybai/skill-install/blob/main/.github/assets/standards.png?raw=true" width="600" alt="xkcd 927: standards proliferate" />
-  <br />
-  <sub><i>Every agent has its own format for skills, MCP, and AGENTS.md. <code>agent-install</code> writes to all of them so you don't ship the 15th. (<a href="https://xkcd.com/927/">xkcd 927</a>)</i></sub>
-</p>
-
 ## Install
 
 As a library:
