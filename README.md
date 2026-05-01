@@ -240,7 +240,7 @@ https://mcp.example.com/sse (+ transport: "sse")
 
 | Surface   | Agents                                                                                                                                              |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Skills    | Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Goose, Windsurf, Roo, Cline, Kilo, universal                                      |
+| Skills    | Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Goose, Windsurf, Roo, Cline, Kilo, Factory Droid, Pi, universal                   |
 | MCP       | Claude Code, Claude Desktop, Cursor, Codex, Cline (ext + CLI), VS Code, GitHub Copilot CLI, Gemini CLI, Goose, OpenCode, Zed, Antigravity, MCPorter |
 | AGENTS.md | Universal, Claude Code (CLAUDE.md), Gemini CLI (GEMINI.md), Cursor (.cursor/rules), Windsurf (.windsurfrules), Codex, OpenCode, Aider               |
 

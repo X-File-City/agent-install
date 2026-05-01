@@ -24,6 +24,7 @@ const PRIORITY_RELATIVE_PATHS: readonly string[] = [
   ".roo/skills",
   ".cline/skills",
   ".kilocode/skills",
+  ".factory/skills",
 ];
 
 const hasSkillManifest = async (dir: string): Promise<boolean> => {

@@ -34,6 +34,13 @@ export const skillAgents: Record<SkillAgentType, SkillAgentConfig> = {
     detectInstalled: async () => existsSync(join(home, ".cursor")),
     isUniversal: true,
   },
+  droid: {
+    name: "droid",
+    displayName: "Factory Droid",
+    skillsDir: ".factory/skills",
+    globalSkillsDir: join(home, ".factory/skills"),
+    detectInstalled: async () => existsSync(join(home, ".factory")),
+  },
   "gemini-cli": {
     name: "gemini-cli",
     displayName: "Gemini CLI",
@@ -63,6 +70,14 @@ export const skillAgents: Record<SkillAgentType, SkillAgentConfig> = {
     skillsDir: CANONICAL_SKILLS_DIR,
     globalSkillsDir: join(configHome, "opencode/skills"),
     detectInstalled: async () => existsSync(join(configHome, "opencode")),
+    isUniversal: true,
+  },
+  pi: {
+    name: "pi",
+    displayName: "Pi",
+    skillsDir: CANONICAL_SKILLS_DIR,
+    globalSkillsDir: join(home, ".pi/agent/skills"),
+    detectInstalled: async () => existsSync(join(home, ".pi")),
     isUniversal: true,
   },
   windsurf: {
