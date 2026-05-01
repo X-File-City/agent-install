@@ -15,21 +15,75 @@ Works with Claude Code, Cursor, Codex, OpenCode, and 40+ other coding agents. Wr
 
 ## Install
 
+As a library:
+
 ```bash
 npm install agent-install
 ```
 
-## Quick start
+Or use the CLI directly without installing:
 
-The Node API is namespaced by surface: `skill`, `mcp`, and `agentsMd`. Each surface uses verbs that match the CLI (`add`, `list`, `remove`, `setSection`, etc.) so you only have to remember one set of names.
+```bash
+npx agent-install --help
+```
+
+## Quick start
 
 ```ts
 import { skill, mcp, agentsMd } from "agent-install";
 
-await skill.add({ source: "./skills/react-grab", agents: ["cursor"] });
+await skill.add({ source: "owner/repo", agents: ["cursor"] });
 mcp.add({ source: "https://mcp.context7.com/mcp", agents: ["cursor"], name: "context7" });
 agentsMd.setSection({ heading: "Testing", body: "Run pnpm test" });
 ```
+
+Same three actions from the CLI:
+
+```bash
+npx agent-install skill add owner/repo -a cursor
+npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install doc set-section "Testing" --body "Run pnpm test"
+```
+
+The Node API is namespaced by surface (`skill`, `mcp`, `agentsMd`) using verbs that match the CLI (`add`, `list`, `remove`, `setSection`, `removeSection`, `read`).
+
+## CLI
+
+A thin wrapper around the Node API for one-off installs, scripts, and CI.
+
+### Skills
+
+```bash
+npx agent-install skill add ./skills/react-grab
+npx agent-install skill add owner/repo
+npx agent-install skill add https://github.com/owner/repo/tree/main/skills/foo
+
+npx agent-install skill init [name]      # create a new SKILL.md
+npx agent-install skill list             # list installed skills
+npx agent-install skill remove [skills]  # remove installed skills
+```
+
+### MCP servers
+
+```bash
+npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
+
+npx agent-install mcp list           # list installed MCP servers
+npx agent-install mcp remove <name>  # remove by server name
+```
+
+### AGENTS.md
+
+```bash
+npx agent-install doc init
+npx agent-install doc set-section "Testing" --body "Run pnpm test"
+npx agent-install doc remove-section "Testing"
+npx agent-install doc symlink-claude
+npx agent-install doc read
+```
+
+## Node API
 
 You can also import each surface from its own subpath:
 
@@ -39,7 +93,7 @@ import * as mcp from "agent-install/mcp";
 import * as agentsMd from "agent-install/agents-md";
 ```
 
-## Skills
+### Skills
 
 A skill is a `SKILL.md` file that an agent picks up to trigger behavior. `skill.add` parses a source (local path, GitHub repo, or URL), fetches it, and installs every discovered `SKILL.md` into each selected agent.
 
@@ -64,7 +118,7 @@ skill.detectInstalledSkillAgents()
 skill.installSkillForAgent(skill, agent, opts)
 ```
 
-## MCP servers
+### MCP servers
 
 `mcp.add` parses a source (remote URL, npm package, or raw command), builds an `McpServerConfig`, and writes it into each selected agent's native config file (JSON, JSONC, YAML, or TOML). JSONC writes preserve existing comments.
 
@@ -96,7 +150,7 @@ mcp.buildMcpServerConfig(parsed, opts)
 mcp.installMcpServerForAgent(name, config, agent, opts)
 ```
 
-## AGENTS.md
+### AGENTS.md
 
 `agentsMd` reads, upserts, and removes sections in [AGENTS.md](https://agents.md/) and its per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`, etc.) without losing surrounding content.
 
@@ -123,7 +177,7 @@ agentsMd.findSection(sections, "Testing")
 agentsMd.resolveAgentsMdFilePath({ agent: "claude-code" })
 ```
 
-## Subpath exports
+### Subpath exports
 
 | Import                    | Surface                                                                            |
 | ------------------------- | ---------------------------------------------------------------------------------- |
@@ -180,46 +234,6 @@ https://mcp.context7.com/mcp                  # remote HTTP
 https://mcp.example.com/sse (+ transport: "sse")
 @modelcontextprotocol/server-postgres         # npm package (wrapped in npx -y)
 "node /path/to/server.js --port 3000"         # raw command
-```
-
-## CLI
-
-The package also ships an `agent-install` CLI for use outside of code (one-off installs, scripts, CI). It's a thin wrapper around the Node API.
-
-```bash
-npx agent-install --help
-```
-
-### Skills
-
-```bash
-npx agent-install skill add ./skills/react-grab
-npx agent-install skill add owner/repo
-npx agent-install skill add https://github.com/owner/repo/tree/main/skills/foo
-
-npx agent-install skill init [name]      # create a new SKILL.md
-npx agent-install skill list             # list installed skills
-npx agent-install skill remove [skills]  # remove installed skills
-```
-
-### MCP servers
-
-```bash
-npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
-npx agent-install mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
-
-npx agent-install mcp list           # list installed MCP servers
-npx agent-install mcp remove <name>  # remove by server name
-```
-
-### AGENTS.md
-
-```bash
-npx agent-install doc init
-npx agent-install doc set-section "Testing" --body "Run pnpm test"
-npx agent-install doc remove-section "Testing"
-npx agent-install doc symlink-claude
-npx agent-install doc read
 ```
 
 ## Supported agents
