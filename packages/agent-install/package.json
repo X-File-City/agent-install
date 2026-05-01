@@ -1,0 +1,74 @@
+{
+  "name": "agent-install",
+  "version": "0.1.0",
+  "description": "Install SKILL.md files, MCP servers, and AGENTS.md guidance for any coding agent. Ships both a Node API and a CLI.",
+  "keywords": [
+    "agent",
+    "agents-md",
+    "claude",
+    "cli",
+    "codex",
+    "cursor",
+    "install",
+    "mcp",
+    "model-context-protocol",
+    "opencode",
+    "skill",
+    "skills"
+  ],
+  "license": "MIT",
+  "bin": {
+    "agent-install": "./bin/agent-install.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./skill": {
+      "types": "./dist/skill.d.ts",
+      "import": "./dist/skill.js",
+      "require": "./dist/skill.cjs"
+    },
+    "./mcp": {
+      "types": "./dist/mcp.d.ts",
+      "import": "./dist/mcp.js",
+      "require": "./dist/mcp.cjs"
+    },
+    "./agents-md": {
+      "types": "./dist/agents-md.d.ts",
+      "import": "./dist/agents-md.js",
+      "require": "./dist/agents-md.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vp pack --watch",
+    "build": "rm -rf dist && NODE_ENV=production vp pack",
+    "test": "vp test run",
+    "typecheck": "tsc --noEmit",
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "commander": "^14.0.0",
+    "jsonc-parser": "^3.3.1",
+    "picocolors": "^1.1.1",
+    "prompts": "^2.4.2",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/prompts": "^2.4.9"
+  }
+}
