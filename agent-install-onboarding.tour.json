@@ -1,0 +1,340 @@
+{
+  "id": "agent-install-onboarding",
+  "title": "agent-install Onboarding Tour",
+  "description": "Tour the agent-install monorepo: install agent skills and MCP servers across 40+ coding agents with one API.",
+  "version": "1.0.0",
+  "audience": "New Contributors",
+  "prerequisites": [
+    "Familiarity with TypeScript and pnpm workspaces"
+  ],
+  "steps": [
+    {
+      "id": "step-1-overview",
+      "title": "Project Overview",
+      "description": "Welcome to agent-install. This monorepo provides a single API for installing skills, MCP servers, and shared agent instructions across 40+ coding agents like Claude Code, Cursor, and Codex. Two workspaces split the project — the core library and a marketing site.",
+      "estimatedTime": 60,
+      "focusDirectory": "",
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-2-monorepo-layout",
+      "title": "Monorepo Layout",
+      "description": "Pnpm and Turbo manage two workspaces — the marketing site and the core library. Configuration at the repository root wires them together with workspace declarations, the build pipeline, and shared TypeScript settings.",
+      "estimatedTime": 90,
+      "focusDirectory": "",
+      "highlightLayers": [
+        {
+          "id": "workspaces",
+          "name": "Workspaces",
+          "color": "#3b82f6",
+          "items": [
+            { "path": "apps", "type": "directory" },
+            { "path": "packages", "type": "directory" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "monorepo-config",
+          "name": "Monorepo Config",
+          "color": "#f59e0b",
+          "items": [
+            { "path": "pnpm-workspace.yaml", "type": "file" },
+            { "path": "turbo.json", "type": "file" },
+            { "path": "package.json", "type": "file" },
+            { "path": "tsconfig.json", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-3-core-package",
+      "title": "Core Package",
+      "description": "This is the published package. Everything users consume — the Node API, the command-line interface, and types — lives here, with one subdirectory per public surface.",
+      "estimatedTime": 90,
+      "focusDirectory": "packages/agent-install",
+      "highlightLayers": [
+        {
+          "id": "package-entry",
+          "name": "Package Entry Points",
+          "color": "#10b981",
+          "items": [
+            { "path": "packages/agent-install/src/index.ts", "type": "file" },
+            { "path": "packages/agent-install/bin", "type": "directory" },
+            { "path": "packages/agent-install/package.json", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-4-three-surfaces",
+      "title": "Three Public Surfaces",
+      "description": "The library is namespaced by what it installs. The skill surface handles agent skill files across 52 agents. The MCP surface writes server configuration into each agent's native config format. The shared-instructions surface upserts sections in agent instruction files and their per-agent variants.",
+      "estimatedTime": 120,
+      "focusDirectory": "packages/agent-install/src",
+      "highlightLayers": [
+        {
+          "id": "skill-surface",
+          "name": "Skill Surface",
+          "color": "#8b5cf6",
+          "items": [
+            { "path": "packages/agent-install/src/skill", "type": "directory" },
+            { "path": "packages/agent-install/src/skill.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "mcp-surface",
+          "name": "MCP Surface",
+          "color": "#ec4899",
+          "items": [
+            { "path": "packages/agent-install/src/mcp", "type": "directory" },
+            { "path": "packages/agent-install/src/mcp.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "agents-md-surface",
+          "name": "AGENTS.md Surface",
+          "color": "#06b6d4",
+          "items": [
+            { "path": "packages/agent-install/src/agents-md", "type": "directory" },
+            { "path": "packages/agent-install/src/agents-md.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-5-skill-internals",
+      "title": "Skill Surface Internals",
+      "description": "The skill module parses sources — local paths, GitHub and GitLab shorthands, SSH URLs, and well-known endpoints — then shallow-clones to a temp directory, discovers skill files, reads their frontmatter, and installs into each agent's native skills location. A registry holds the 52 supported agents.",
+      "estimatedTime": 120,
+      "focusDirectory": "packages/agent-install/src/skill",
+      "highlightLayers": [
+        {
+          "id": "skill-core",
+          "name": "Source & Install Pipeline",
+          "color": "#8b5cf6",
+          "items": [
+            { "path": "packages/agent-install/src/skill/source-parser.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/install-skills-from-source.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/installer.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/git.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "skill-discovery",
+          "name": "Discovery & Parsing",
+          "color": "#22c55e",
+          "items": [
+            { "path": "packages/agent-install/src/skill/skills.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/frontmatter.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/plugin-manifest.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/fetch-well-known.ts", "type": "file" },
+            { "path": "packages/agent-install/src/skill/fetch-url.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "skill-registry",
+          "name": "Agent Registry",
+          "color": "#f97316",
+          "items": [
+            { "path": "packages/agent-install/src/skill/agents.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-6-mcp-internals",
+      "title": "MCP Surface Internals",
+      "description": "The MCP module writes server configuration into each agent's native file format. Format writers cover plain JSON, commented JSON, YAML, and TOML — the commented variant preserves existing comments on write. Transform helpers adapt the canonical config into per-agent shapes, and the source parser handles remote URLs, npm packages, and raw commands.",
+      "estimatedTime": 120,
+      "focusDirectory": "packages/agent-install/src/mcp",
+      "highlightLayers": [
+        {
+          "id": "mcp-core",
+          "name": "Install & Resolve",
+          "color": "#ec4899",
+          "items": [
+            { "path": "packages/agent-install/src/mcp/install-mcp-server.ts", "type": "file" },
+            { "path": "packages/agent-install/src/mcp/installer.ts", "type": "file" },
+            { "path": "packages/agent-install/src/mcp/resolve-config-target.ts", "type": "file" },
+            { "path": "packages/agent-install/src/mcp/build-server-config.ts", "type": "file" },
+            { "path": "packages/agent-install/src/mcp/source-parser.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "mcp-formats",
+          "name": "Config Formats & Transforms",
+          "color": "#0ea5e9",
+          "items": [
+            { "path": "packages/agent-install/src/mcp/formats", "type": "directory" },
+            { "path": "packages/agent-install/src/mcp/transforms", "type": "directory" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-7-agents-md-internals",
+      "title": "AGENTS.md Surface Internals",
+      "description": "Reads, upserts, and removes named sections in shared agent instruction files without losing surrounding content. Path resolution maps each agent to its conventional location — Cursor rules, Windsurf rules, Gemini and Claude instructions, and so on. A symlink helper links Claude's instruction file to the canonical one.",
+      "estimatedTime": 90,
+      "focusDirectory": "packages/agent-install/src/agents-md",
+      "highlightLayers": [
+        {
+          "id": "agents-md-ops",
+          "name": "Section Operations",
+          "color": "#06b6d4",
+          "items": [
+            { "path": "packages/agent-install/src/agents-md/upsert-section.ts", "type": "file" },
+            { "path": "packages/agent-install/src/agents-md/remove-section.ts", "type": "file" },
+            { "path": "packages/agent-install/src/agents-md/sections.ts", "type": "file" },
+            { "path": "packages/agent-install/src/agents-md/read-write.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "agents-md-paths",
+          "name": "Path Resolution",
+          "color": "#84cc16",
+          "items": [
+            { "path": "packages/agent-install/src/agents-md/resolve-file-path.ts", "type": "file" },
+            { "path": "packages/agent-install/src/agents-md/known-files.ts", "type": "file" },
+            { "path": "packages/agent-install/src/agents-md/symlink-claude.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-8-cli",
+      "title": "CLI Layer",
+      "description": "A thin wrapper around the Node API for one-off use, scripts, and CI. Each verb — add, list, remove, set-section — has its own command file. The CLI calls the same surfaces shown earlier, with no duplicated logic.",
+      "estimatedTime": 60,
+      "focusDirectory": "packages/agent-install/src/cli",
+      "highlightLayers": [
+        {
+          "id": "cli-entry",
+          "name": "CLI Entry & Commands",
+          "color": "#eab308",
+          "items": [
+            { "path": "packages/agent-install/src/cli.ts", "type": "file" },
+            { "path": "packages/agent-install/src/cli/commands", "type": "directory" },
+            { "path": "packages/agent-install/src/cli/utils", "type": "directory" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-9-tests",
+      "title": "Tests",
+      "description": "Vitest suite for the package. Tests live alongside the source. Run them from the repository root and Turbo orchestrates the whole graph.",
+      "estimatedTime": 45,
+      "focusDirectory": "packages/agent-install",
+      "highlightLayers": [
+        {
+          "id": "tests",
+          "name": "Test Suite",
+          "color": "#22c55e",
+          "items": [
+            { "path": "packages/agent-install/test", "type": "directory" },
+            { "path": "packages/agent-install/vite.config.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-10-website",
+      "title": "Marketing Website",
+      "description": "A Next.js and Tailwind site. The App Router lives in one folder, shared UI in another, and helpers in a third. It's independent from the library — its own package manifest and its own build.",
+      "estimatedTime": 60,
+      "focusDirectory": "apps/website",
+      "highlightLayers": [
+        {
+          "id": "website-structure",
+          "name": "Next.js App",
+          "color": "#a855f7",
+          "items": [
+            { "path": "apps/website/app", "type": "directory" },
+            { "path": "apps/website/components", "type": "directory" },
+            { "path": "apps/website/lib", "type": "directory" },
+            { "path": "apps/website/next.config.ts", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-11-release-flow",
+      "title": "Release Flow",
+      "description": "Releases use Changesets. A staging folder collects pending version bumps, the version script applies them, and the release script builds and publishes. CI workflows run lint, typecheck, and tests on every pull request.",
+      "estimatedTime": 60,
+      "focusDirectory": "",
+      "highlightLayers": [
+        {
+          "id": "release",
+          "name": "Release & CI",
+          "color": "#ef4444",
+          "items": [
+            { "path": ".changeset", "type": "directory" },
+            { "path": ".github", "type": "directory" },
+            { "path": "AGENTS.md", "type": "file" }
+          ],
+          "opacity": 0.7,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-12-next-steps",
+      "title": "Next Steps",
+      "description": "You've seen the layout. To start contributing, install dependencies, then build and test. Adding a new agent means extending the agent registry — one for skills, one for MCP. New features need a changeset so they get versioned.",
+      "estimatedTime": 30,
+      "focusDirectory": "",
+      "colorMode": "fileTypes"
+    }
+  ],
+  "metadata": {
+    "createdAt": "2026-05-01T00:00:00.000Z",
+    "tags": [
+      "onboarding",
+      "monorepo",
+      "agent-install"
+    ]
+  }
+}
