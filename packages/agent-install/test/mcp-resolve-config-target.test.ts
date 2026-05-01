@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { mcpAgents } from "../src/mcp/agents.ts";
 import { resolveMcpConfigTarget } from "../src/mcp/resolve-config-target.ts";

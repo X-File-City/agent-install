@@ -18,12 +18,22 @@ export {
   removeServerFromConfigFile,
   writeServerToConfigFile,
 } from "./formats/index.ts";
-export { installMcpServer, resolveMcpTargetAgents } from "./install-mcp-server.ts";
+export {
+  installMcpServer,
+  installMcpServer as add,
+  installMcpServer as install,
+  resolveMcpTargetAgents,
+} from "./install-mcp-server.ts";
 export { installMcpServerForAgent, installMcpServerForAgents } from "./installer.ts";
 export { resolveMcpConfigTarget } from "./resolve-config-target.ts";
-export { listInstalledMcpServers } from "./list.ts";
-export { extractPackageName, isRemoteMcpSource, parseMcpSource } from "./source-parser.ts";
-export { removeMcpServer, removeMcpServerFromAgent } from "./remove.ts";
+export { listInstalledMcpServers, listInstalledMcpServers as list } from "./list.ts";
+export {
+  extractPackageName,
+  isRemoteMcpSource,
+  parseMcpSource,
+  parseMcpSource as parseSource,
+} from "./source-parser.ts";
+export { removeMcpServer, removeMcpServer as remove, removeMcpServerFromAgent } from "./remove.ts";
 
 export type {
   InstallMcpServerOptions,

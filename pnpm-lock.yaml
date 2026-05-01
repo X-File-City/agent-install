@@ -55,6 +55,9 @@ importers:
       '@types/prompts':
         specifier: ^2.4.9
         version: 2.4.9
+      '@voidzero-dev/vite-plus-test':
+        specifier: ^0.1.20
+        version: 0.1.20(@types/node@25.6.0)(typescript@5.9.3)(vite@8.0.10(@types/node@25.6.0)(yaml@2.8.3))(yaml@2.8.3)
 
 packages:
 

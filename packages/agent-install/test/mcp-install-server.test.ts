@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { installMcpServer, resolveMcpTargetAgents } from "../src/mcp/install-mcp-server.ts";
 

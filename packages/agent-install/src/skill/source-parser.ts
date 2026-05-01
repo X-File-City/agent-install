@@ -1,7 +1,46 @@
 import { isAbsolute, resolve } from "node:path";
 
+import { escapeRegex } from "../utils/escape-regex.ts";
 import { sanitizeSubpath } from "../utils/sanitize-subpath.ts";
 import type { ParsedSkillSource } from "./types.ts";
+
+type Host = "github" | "gitlab";
+
+interface HostConfig {
+  host: Host;
+  domain: string;
+  prefix: string;
+  treePrefix: string;
+  // GitHub repos live at /owner/repo with no nesting, so we tolerate trailing
+  // path segments (e.g. /blob/main/file.md, /issues/123) and still extract owner/repo.
+  // GitLab supports subgroups (/group/subgroup/project), so a lenient regex would
+  // mis-parse subgroup URLs as owner/repo. We anchor GitLab strictly instead.
+  anchorRepo: boolean;
+}
+
+const HOST_CONFIGS: HostConfig[] = [
+  {
+    host: "github",
+    domain: "github.com",
+    prefix: "github:",
+    treePrefix: "/tree/",
+    anchorRepo: false,
+  },
+  {
+    host: "gitlab",
+    domain: "gitlab.com",
+    prefix: "gitlab:",
+    treePrefix: "/-/tree/",
+    anchorRepo: true,
+  },
+];
+
+const HOST_BY_NAME = new Map<Host, HostConfig>(HOST_CONFIGS.map((config) => [config.host, config]));
+const HOST_BY_DOMAIN = new Map<string, HostConfig>(
+  HOST_CONFIGS.map((config) => [config.domain, config]),
+);
+
+const SSH_URL_PATTERN = /^git@([^:]+):([^/]+)\/([^/]+?)(?:\.git)?$/;
 
 const isLocalPath = (input: string): boolean =>
   isAbsolute(input) ||
@@ -14,7 +53,8 @@ const isLocalPath = (input: string): boolean =>
 const isShorthandCandidate = (input: string): boolean =>
   !input.includes(":") && !input.startsWith(".") && !input.startsWith("/");
 
-interface GithubSourceInput {
+interface HostedSourceInput {
+  host: Host;
   owner: string;
   repo: string;
   ref?: string;
@@ -22,23 +62,49 @@ interface GithubSourceInput {
   skillFilter?: string;
 }
 
-const buildGithubSource = ({
+const buildHostedSource = ({
+  host,
   owner,
   repo,
   ref,
   subpath,
   skillFilter,
-}: GithubSourceInput): ParsedSkillSource => {
+}: HostedSourceInput): ParsedSkillSource => {
+  const config = HOST_BY_NAME.get(host);
+  if (!config) throw new Error(`Unknown host: ${host}`);
   const cleanRepo = repo.replace(/\.git$/, "");
   const result: ParsedSkillSource = {
-    type: "github",
-    url: `https://github.com/${owner}/${cleanRepo}.git`,
+    type: host,
+    url: `https://${config.domain}/${owner}/${cleanRepo}.git`,
   };
   if (ref) result.ref = ref;
   if (subpath) result.subpath = sanitizeSubpath(subpath);
   if (skillFilter) result.skillFilter = skillFilter;
   return result;
 };
+
+interface HostUrlPatterns {
+  treeWithPath: RegExp;
+  tree: RegExp;
+  repo: RegExp;
+}
+
+const buildHostUrlPatterns = (config: HostConfig): HostUrlPatterns => {
+  const domain = escapeRegex(config.domain);
+  const treePrefix = escapeRegex(config.treePrefix);
+  const repoPattern = config.anchorRepo
+    ? `${domain}/([^/]+)/([^/]+?)(?:\\.git)?/?$`
+    : `${domain}/([^/]+)/([^/]+)`;
+  return {
+    treeWithPath: new RegExp(`${domain}/([^/]+)/([^/]+)${treePrefix}([^/]+)/(.+)`),
+    tree: new RegExp(`${domain}/([^/]+)/([^/]+)${treePrefix}([^/]+)$`),
+    repo: new RegExp(repoPattern),
+  };
+};
+
+const HOST_URL_PATTERNS = new Map<Host, HostUrlPatterns>(
+  HOST_CONFIGS.map((config) => [config.host, buildHostUrlPatterns(config)]),
+);
 
 interface FragmentRefResult {
   inputWithoutFragment: string;
@@ -55,13 +121,18 @@ const decodeFragmentValue = (value: string): string => {
 };
 
 const looksLikeGitSource = (input: string): boolean => {
-  if (input.startsWith("github:") || input.startsWith("git@")) return true;
+  if (input.startsWith("git@")) return true;
+  if (HOST_CONFIGS.some((config) => input.startsWith(config.prefix))) return true;
 
   if (input.startsWith("http://") || input.startsWith("https://")) {
     try {
       const parsed = new URL(input);
-      if (parsed.hostname === "github.com") {
-        return /^\/[^/]+\/[^/]+(?:\.git)?(?:\/tree\/[^/]+(?:\/.*)?)?\/?$/.test(parsed.pathname);
+      const config = HOST_BY_DOMAIN.get(parsed.hostname);
+      if (config) {
+        const treePrefix = escapeRegex(config.treePrefix);
+        return new RegExp(`^/[^/]+/[^/]+(?:\\.git)?(?:${treePrefix}[^/]+(?:/.*)?)?/?$`).test(
+          parsed.pathname,
+        );
       }
     } catch {
       return false;
@@ -97,13 +168,107 @@ const parseFragmentRef = (input: string): FragmentRefResult => {
   };
 };
 
-const appendFragmentRef = (input: string, ref?: string, skillFilter?: string): string => {
-  if (!ref) return input;
-  return `${input}#${ref}${skillFilter ? `@${skillFilter}` : ""}`;
-};
-
 const isDirectSkillMdUrl = (input: string): boolean =>
   /^https?:\/\//.test(input) && /\bSKILL\.md(?:$|\?|#)/i.test(input);
+
+const parseHostedShorthand = (
+  rest: string,
+  host: Host,
+  fragmentRef?: string,
+  fragmentSkillFilter?: string,
+): ParsedSkillSource | null => {
+  const atSkillMatch = rest.match(/^([^/]+)\/([^/@]+)@(.+)$/);
+  if (atSkillMatch) {
+    const [, owner, repo, skillFilter] = atSkillMatch;
+    return buildHostedSource({
+      host,
+      owner,
+      repo,
+      ref: fragmentRef,
+      skillFilter: fragmentSkillFilter ?? skillFilter,
+    });
+  }
+
+  const shorthandMatch = rest.match(/^([^/]+)\/([^/]+)(?:\/(.+?))?\/?$/);
+  if (shorthandMatch) {
+    const [, owner, repo, subpath] = shorthandMatch;
+    return buildHostedSource({
+      host,
+      owner,
+      repo,
+      ref: fragmentRef,
+      subpath,
+      skillFilter: fragmentSkillFilter,
+    });
+  }
+
+  return null;
+};
+
+const isHostnameAuthoritative = (input: string, expectedHostname: string): boolean => {
+  if (!input.startsWith("http://") && !input.startsWith("https://")) return false;
+  try {
+    return new URL(input).hostname === expectedHostname;
+  } catch {
+    return false;
+  }
+};
+
+const parseHostUrl = (
+  input: string,
+  host: Host,
+  fragmentRef?: string,
+): ParsedSkillSource | null => {
+  const config = HOST_BY_NAME.get(host);
+  if (!config) return null;
+  // We validate the hostname strictly via URL to defeat spoofing
+  // (e.g. "https://example-github.com/owner/repo"), but match the regex on the
+  // original input — `URL.pathname` normalizes "/../" segments, which would
+  // bypass `sanitizeSubpath`'s traversal protection.
+  if (!isHostnameAuthoritative(input, config.domain)) return null;
+
+  const patterns = HOST_URL_PATTERNS.get(host);
+  if (!patterns) return null;
+
+  const treeWithPathMatch = input.match(patterns.treeWithPath);
+  if (treeWithPathMatch) {
+    const [, owner, repo, ref, subpath] = treeWithPathMatch;
+    return buildHostedSource({ host, owner, repo, ref: ref || fragmentRef, subpath });
+  }
+
+  const treeMatch = input.match(patterns.tree);
+  if (treeMatch) {
+    const [, owner, repo, ref] = treeMatch;
+    return buildHostedSource({ host, owner, repo, ref: ref || fragmentRef });
+  }
+
+  const repoMatch = input.match(patterns.repo);
+  if (repoMatch) {
+    const [, owner, repo] = repoMatch;
+    return buildHostedSource({ host, owner, repo, ref: fragmentRef });
+  }
+
+  return null;
+};
+
+const parseSshUrl = (
+  input: string,
+  fragmentRef?: string,
+  fragmentSkillFilter?: string,
+): ParsedSkillSource | null => {
+  const match = input.match(SSH_URL_PATTERN);
+  if (!match) return null;
+  const [, sshHost] = match;
+
+  const knownHost = HOST_BY_DOMAIN.get(sshHost)?.host;
+  const result: ParsedSkillSource = {
+    type: knownHost ?? "git",
+    url: input,
+  };
+  if (fragmentRef) result.ref = fragmentRef;
+  if (fragmentSkillFilter) result.skillFilter = fragmentSkillFilter;
+  return result;
+};
 
 export const parseSkillSource = (input: string): ParsedSkillSource => {
   if (!input || input.trim().length === 0) {
@@ -124,58 +289,31 @@ export const parseSkillSource = (input: string): ParsedSkillSource => {
   } = parseFragmentRef(input);
   const normalized = inputWithoutFragment;
 
-  const githubPrefixMatch = normalized.match(/^github:(.+)$/);
-  if (githubPrefixMatch) {
-    return parseSkillSource(
-      appendFragmentRef(githubPrefixMatch[1], fragmentRef, fragmentSkillFilter),
-    );
+  for (const config of HOST_CONFIGS) {
+    if (normalized.startsWith(config.prefix)) {
+      const rest = normalized.slice(config.prefix.length);
+      const result = parseHostedShorthand(rest, config.host, fragmentRef, fragmentSkillFilter);
+      if (result) return result;
+    }
   }
 
-  const githubTreeWithPathMatch = normalized.match(
-    /github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)/,
-  );
-  if (githubTreeWithPathMatch) {
-    const [, owner, repo, ref, subpath] = githubTreeWithPathMatch;
-    return buildGithubSource({ owner, repo, ref: ref || fragmentRef, subpath });
+  if (normalized.startsWith("git@")) {
+    const sshResult = parseSshUrl(normalized, fragmentRef, fragmentSkillFilter);
+    if (sshResult) return sshResult;
   }
 
-  const githubTreeMatch = normalized.match(/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)$/);
-  if (githubTreeMatch) {
-    const [, owner, repo, ref] = githubTreeMatch;
-    return buildGithubSource({ owner, repo, ref: ref || fragmentRef });
-  }
-
-  const githubRepoMatch = normalized.match(/github\.com\/([^/]+)\/([^/]+)/);
-  if (githubRepoMatch) {
-    const [, owner, repo] = githubRepoMatch;
-    return buildGithubSource({ owner, repo, ref: fragmentRef });
+  for (const config of HOST_CONFIGS) {
+    const result = parseHostUrl(normalized, config.host, fragmentRef);
+    if (result) return result;
   }
 
   if (isDirectSkillMdUrl(normalized)) {
     return { type: "url", url: normalized };
   }
 
-  const atSkillMatch = normalized.match(/^([^/]+)\/([^/@]+)@(.+)$/);
-  if (atSkillMatch && isShorthandCandidate(normalized)) {
-    const [, owner, repo, skillFilter] = atSkillMatch;
-    return buildGithubSource({
-      owner,
-      repo,
-      ref: fragmentRef,
-      skillFilter: fragmentSkillFilter || skillFilter,
-    });
-  }
-
-  const shorthandMatch = normalized.match(/^([^/]+)\/([^/]+)(?:\/(.+?))?\/?$/);
-  if (shorthandMatch && isShorthandCandidate(normalized)) {
-    const [, owner, repo, subpath] = shorthandMatch;
-    return buildGithubSource({
-      owner,
-      repo,
-      ref: fragmentRef,
-      subpath,
-      skillFilter: fragmentSkillFilter,
-    });
+  if (isShorthandCandidate(normalized)) {
+    const result = parseHostedShorthand(normalized, "github", fragmentRef, fragmentSkillFilter);
+    if (result) return result;
   }
 
   const result: ParsedSkillSource = { type: "git", url: normalized };

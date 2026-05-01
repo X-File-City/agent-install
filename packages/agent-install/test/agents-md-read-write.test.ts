@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { readAgentsMd, writeAgentsMd } from "../src/agents-md/read-write.ts";
 import { removeAgentsMdSection } from "../src/agents-md/remove-section.ts";

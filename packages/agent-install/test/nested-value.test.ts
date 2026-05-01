@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { deleteNestedValue } from "../src/utils/delete-nested-value.ts";
 import { getNestedValue } from "../src/utils/get-nested-value.ts";

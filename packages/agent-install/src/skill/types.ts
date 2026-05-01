@@ -12,7 +12,7 @@ export type SkillAgentType =
   | "kilo"
   | "universal";
 
-export type SkillSourceType = "local" | "github" | "git" | "url";
+export type SkillSourceType = "local" | "github" | "gitlab" | "git" | "url";
 
 export type InstallMode = "symlink" | "copy";
 

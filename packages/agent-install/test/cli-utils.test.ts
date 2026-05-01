@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { formatAgentList } from "../src/cli/utils/format-agent-list.ts";
 import { parseMcpAgentList } from "../src/cli/utils/parse-mcp-agent-list.ts";

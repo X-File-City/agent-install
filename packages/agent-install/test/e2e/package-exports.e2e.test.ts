@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { DIST_PATH, PACKAGE_ROOT, ensureBuildExists } from "./helpers.ts";
 
@@ -79,9 +79,50 @@ describe("package exports", () => {
     expect(mod.agentsMdFiles).toBeTypeOf("object");
   });
 
-  it("`./skill` is an alias for the root export", async () => {
+  it("`./skill` re-exports the skill API (root adds namespace exports on top)", async () => {
     const root = await import(join(DIST_PATH, "index.js"));
     const alias = await import(join(DIST_PATH, "skill.js"));
-    expect(Object.keys(alias).sort()).toEqual(Object.keys(root).sort());
+    const skillKeys = Object.keys(alias).sort();
+    const rootKeys = Object.keys(root).sort();
+    for (const key of skillKeys) {
+      expect(rootKeys).toContain(key);
+    }
+    expect(rootKeys).toEqual(expect.arrayContaining(["skill", "mcp", "agentsMd"]));
+  });
+
+  it("exposes namespace re-exports (skill, mcp, agentsMd) from the root", async () => {
+    const root = await import(join(DIST_PATH, "index.js"));
+    expect(typeof root.skill.add).toBe("function");
+    expect(typeof root.skill.install).toBe("function");
+    expect(typeof root.mcp.add).toBe("function");
+    expect(typeof root.mcp.list).toBe("function");
+    expect(typeof root.mcp.remove).toBe("function");
+    expect(typeof root.agentsMd.setSection).toBe("function");
+    expect(typeof root.agentsMd.removeSection).toBe("function");
+    expect(typeof root.agentsMd.read).toBe("function");
+    expect(typeof root.agentsMd.write).toBe("function");
+    expect(typeof root.agentsMd.symlinkClaude).toBe("function");
+  });
+
+  it("short-name aliases match their original implementations", async () => {
+    const skill = await import(join(DIST_PATH, "skill.js"));
+    expect(skill.add).toBe(skill.installSkillsFromSource);
+    expect(skill.install).toBe(skill.installSkillsFromSource);
+    expect(skill.discover).toBe(skill.discoverSkills);
+    expect(skill.parseSource).toBe(skill.parseSkillSource);
+
+    const mcp = await import(join(DIST_PATH, "mcp.js"));
+    expect(mcp.add).toBe(mcp.installMcpServer);
+    expect(mcp.install).toBe(mcp.installMcpServer);
+    expect(mcp.list).toBe(mcp.listInstalledMcpServers);
+    expect(mcp.remove).toBe(mcp.removeMcpServer);
+    expect(mcp.parseSource).toBe(mcp.parseMcpSource);
+
+    const agentsMd = await import(join(DIST_PATH, "agents-md.js"));
+    expect(agentsMd.read).toBe(agentsMd.readAgentsMd);
+    expect(agentsMd.write).toBe(agentsMd.writeAgentsMd);
+    expect(agentsMd.setSection).toBe(agentsMd.upsertAgentsMdSection);
+    expect(agentsMd.removeSection).toBe(agentsMd.removeAgentsMdSection);
+    expect(agentsMd.symlinkClaude).toBe(agentsMd.symlinkClaudeToAgents);
   });
 });

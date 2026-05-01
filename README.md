@@ -3,9 +3,9 @@
 [![version](https://img.shields.io/npm/v/agent-install?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
 [![downloads](https://img.shields.io/npm/dt/agent-install.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
 
-Node API for installing skills, MCP servers, and AGENTS.md guidance into any coding agent.
+Install agent skills and MCPs with one API.
 
-It writes to each agent's native config (Claude Code, Cursor, Codex, OpenCode, and others) so your CLI or build script doesn't have to learn ten different formats. A small `agent-install` CLI is also included for one-off use.
+Works with Claude Code, Cursor, Codex, OpenCode, and 40+ other coding agents. Writes to each one's native config (skills directory, MCP JSON/JSONC/YAML/TOML, AGENTS.md) so your CLI or build script doesn't have to learn ten different formats. A small `agent-install` CLI is also included for one-off use.
 
 <p align="center">
   <img src="https://github.com/aidenybai/skill-install/blob/main/.github/assets/standards.png?raw=true" width="600" alt="xkcd 927: standards proliferate" />
@@ -19,130 +19,165 @@ It writes to each agent's native config (Claude Code, Cursor, Codex, OpenCode, a
 npm install agent-install
 ```
 
-## Skills
+## Quick start
 
-A skill is a `SKILL.md` file that an agent picks up and uses to trigger behavior. `installSkillsFromSource` parses a source (local path, GitHub repo, or URL), fetches it, and installs every discovered `SKILL.md` into each selected agent's skills directory.
+The Node API is namespaced by surface: `skill`, `mcp`, and `agentsMd`. Each surface uses verbs that match the CLI (`add`, `list`, `remove`, `setSection`, etc.) so you only have to remember one set of names.
 
 ```ts
-import { installSkillsFromSource } from "agent-install";
+import { skill, mcp, agentsMd } from "agent-install";
 
-const result = await installSkillsFromSource({
+await skill.add({ source: "./skills/react-grab", agents: ["cursor"] });
+mcp.add({ source: "https://mcp.context7.com/mcp", agents: ["cursor"], name: "context7" });
+agentsMd.setSection({ heading: "Testing", body: "Run pnpm test" });
+```
+
+You can also import each surface from its own subpath:
+
+```ts
+import * as skill from "agent-install/skill";
+import * as mcp from "agent-install/mcp";
+import * as agentsMd from "agent-install/agents-md";
+```
+
+## Skills
+
+A skill is a `SKILL.md` file that an agent picks up to trigger behavior. `skill.add` parses a source (local path, GitHub repo, or URL), fetches it, and installs every discovered `SKILL.md` into each selected agent.
+
+```ts
+import { skill } from "agent-install";
+
+const result = await skill.add({
   source: "./skills/react-grab",
   agents: ["claude-code", "cursor"],
 });
 
-console.log(result.installed); // InstalledSkillRecord[]
-console.log(result.failed);    // FailedSkillRecord[]
+result.installed; // InstalledSkillRecord[]
+result.failed;    // FailedSkillRecord[]
 ```
 
 Other useful exports:
 
 ```ts
-import {
-  discoverSkills,
-  parseSkillSource,
-  installSkillForAgent,
-  detectInstalledSkillAgents,
-} from "agent-install";
+skill.discover(dir)        // find SKILL.md files in a directory
+skill.parseSource(spec)    // parse a source string into a ParsedSkillSource
+skill.detectInstalledSkillAgents()
+skill.installSkillForAgent(skill, agent, opts)
 ```
 
 ## MCP servers
 
-An MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.io/docs/develop/build-server). `installMcpServer` parses a source (remote URL, npm package, or raw command), builds an `McpServerConfig`, and writes it into each selected agent's native config file (JSON, JSONC, YAML, or TOML). JSONC writes preserve existing comments.
+`mcp.add` parses a source (remote URL, npm package, or raw command), builds an `McpServerConfig`, and writes it into each selected agent's native config file (JSON, JSONC, YAML, or TOML). JSONC writes preserve existing comments.
 
 ```ts
-import { installMcpServer } from "agent-install/mcp";
+import { mcp } from "agent-install";
 
-const result = installMcpServer({
+mcp.add({
   source: "https://mcp.context7.com/mcp",
   agents: ["cursor", "claude-code"],
   name: "context7",
 });
-```
 
-```ts
-import { installMcpServer } from "agent-install/mcp";
-
-installMcpServer({
+mcp.add({
   source: "@modelcontextprotocol/server-postgres",
   agents: ["claude-code"],
   name: "postgres",
   env: { DATABASE_URL: process.env.DATABASE_URL ?? "" },
 });
+
+mcp.list({ agents: ["cursor"] });
+mcp.remove({ name: "context7", agents: ["cursor"] });
 ```
 
 Other useful exports:
 
 ```ts
-import {
-  parseMcpSource,
-  buildMcpServerConfig,
-  listInstalledMcpServers,
-  removeMcpServer,
-} from "agent-install/mcp";
+mcp.parseSource(spec)
+mcp.buildMcpServerConfig(parsed, opts)
+mcp.installMcpServerForAgent(name, config, agent, opts)
 ```
 
 ## AGENTS.md
 
-[AGENTS.md](https://agents.md/) is the open README-for-agents spec. The `agent-install/agents-md` surface lets you read, upsert, and remove sections in `AGENTS.md` and its per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`, etc.) without losing surrounding content.
+`agentsMd` reads, upserts, and removes sections in [AGENTS.md](https://agents.md/) and its per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`, etc.) without losing surrounding content.
 
 ```ts
-import {
-  upsertAgentsMdSection,
-  removeAgentsMdSection,
-  symlinkClaudeToAgents,
-} from "agent-install/agents-md";
+import { agentsMd } from "agent-install";
 
-upsertAgentsMdSection({
+agentsMd.setSection({
   heading: "React Grab",
   body: "Run `npx grab@latest` to set up React Grab.",
   placement: "append",
 });
 
-await symlinkClaudeToAgents();
+agentsMd.removeSection({ heading: "Old section" });
+await agentsMd.symlinkClaude();
 ```
 
 Other useful exports:
 
 ```ts
-import {
-  readAgentsMd,
-  writeAgentsMd,
-  parseSections,
-  findSection,
-  resolveAgentsMdFilePath,
-} from "agent-install/agents-md";
+agentsMd.read({ agent: "cursor" })
+agentsMd.write({ content: "..." })
+agentsMd.parseSections(content)
+agentsMd.findSection(sections, "Testing")
+agentsMd.resolveAgentsMdFilePath({ agent: "claude-code" })
 ```
 
 ## Subpath exports
 
-| Import                    | Surface                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `agent-install`           | Skills (SKILL.md install, discovery, clone/URL fetch) |
-| `agent-install/skill`     | Alias of the root import                              |
-| `agent-install/mcp`       | MCP servers (install, list, remove across agents)     |
-| `agent-install/agents-md` | AGENTS.md manipulation and `CLAUDE.md` symlink helper |
+| Import                    | Surface                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `agent-install`           | All three surfaces as `skill`, `mcp`, `agentsMd` namespaces (+ flat skill exports) |
+| `agent-install/skill`     | Skill surface only                                                                 |
+| `agent-install/mcp`       | MCP surface only                                                                   |
+| `agent-install/agents-md` | AGENTS.md surface (kebab-case path, import as `agentsMd`)                          |
+
+Every short-name verb has a long-form alias if you prefer it: `skill.add` is `skill.installSkillsFromSource`, `mcp.add` is `mcp.installMcpServer`, `agentsMd.setSection` is `agentsMd.upsertAgentsMdSection`, and so on.
 
 ## Source formats
 
 ### Skill sources
 
+`skill.add` accepts a wide range of sources. Anything that resolves to a git URL is shallow-cloned into a temp directory, scanned for `SKILL.md` files, and installed.
+
 ```
+# Local
 ./skills/my-skill                             # local path
-owner/repo                                    # GitHub shorthand
+/abs/path/to/skill                            # absolute path
+
+# GitHub
+owner/repo                                    # shorthand
 owner/repo/path/to/skill                      # with subpath
 owner/repo@skill-name                         # with skill filter
 owner/repo#branch                             # with git ref
+github:owner/repo                             # explicit prefix
 https://github.com/owner/repo                 # full URL
 https://github.com/owner/repo/tree/main/skills/foo
-https://example.com/path/SKILL.md             # direct SKILL.md URL
+
+# GitLab
+gitlab:owner/repo                             # shorthand
+gitlab:owner/repo/path/to/skill               # with subpath
+https://gitlab.com/owner/repo                 # full URL
+https://gitlab.com/owner/repo/-/tree/main/skills/foo
+
+# SSH (preserves SSH URL for clone, useful for private repos)
+git@github.com:owner/repo.git
+git@gitlab.com:owner/repo.git
+git@github.com:owner/repo.git#main@my-skill   # with ref + skill filter
+
+# Any other git remote (Bitbucket, self-hosted, etc.)
+https://git.example.com/owner/repo.git
+git@bitbucket.org:owner/repo.git
+
+# Direct SKILL.md URL
+https://example.com/path/SKILL.md
 ```
 
 ### MCP sources
 
 ```
 https://mcp.context7.com/mcp                  # remote HTTP
-https://mcp.example.com/sse (+ --transport sse)
+https://mcp.example.com/sse (+ transport: "sse")
 @modelcontextprotocol/server-postgres         # npm package (wrapped in npx -y)
 "node /path/to/server.js --port 3000"         # raw command
 ```

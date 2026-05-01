@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import TOML from "@iarna/toml";
 import { parse as parseJsonc } from "jsonc-parser";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "@voidzero-dev/vite-plus-test";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 import { removeServerFromConfigFile } from "../src/mcp/formats/index.ts";

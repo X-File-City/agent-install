@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "@voidzero-dev/vite-plus-test";
 
 import { sanitizeMetadata } from "../src/utils/sanitize-metadata.ts";
 import { stripTerminalEscapes } from "../src/utils/strip-terminal-escapes.ts";

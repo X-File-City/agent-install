@@ -24,10 +24,6 @@
     "bin",
     "dist"
   ],
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -54,6 +50,10 @@
       "require": "./dist/agents-md.cjs"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "dev": "vp pack --watch",
     "build": "rm -rf dist && NODE_ENV=production vp pack",
@@ -73,6 +73,7 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "@types/prompts": "^2.4.9"
+    "@types/prompts": "^2.4.9",
+    "@voidzero-dev/vite-plus-test": "^0.1.20"
   }
 }
