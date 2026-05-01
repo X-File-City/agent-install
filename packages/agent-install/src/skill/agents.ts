@@ -170,10 +170,11 @@ export const skillAgents: Record<SkillAgentType, SkillAgentConfig> = {
   },
   devin: {
     name: "devin",
-    displayName: "Devin for Terminal",
-    skillsDir: ".devin/skills",
+    displayName: "Devin",
+    skillsDir: CANONICAL_SKILLS_DIR,
     globalSkillsDir: join(configHome, "devin/skills"),
     detectInstalled: async () => existsSync(join(configHome, "devin")),
+    isUniversal: true,
   },
   dexto: {
     name: "dexto",

@@ -31,7 +31,6 @@ const PRIORITY_RELATIVE_PATHS: readonly string[] = [
   ".cortex/skills",
   ".crush/skills",
   ".cursor/skills",
-  ".devin/skills",
   ".factory/skills",
   ".forge/skills",
   ".gemini/skills",
