@@ -3,17 +3,17 @@
 [![version](https://img.shields.io/npm/v/agent-install?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
 [![downloads](https://img.shields.io/npm/dt/agent-install.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/agent-install)
 
-Install skills, MCP servers, and AGENTS.md guidance for any coding agent.
+Node API for installing skills, MCP servers, and AGENTS.md guidance into any coding agent.
 
-One package, one CLI, one Node API. It writes to each agent's native config so you don't have to learn ten different formats.
+It writes to each agent's native config (Claude Code, Cursor, Codex, OpenCode, and others) so your CLI or build script doesn't have to learn ten different formats. A small `agent-install` CLI is also included for one-off use.
+
+<p align="center">
+  <img src="https://github.com/aidenybai/skill-install/blob/main/.github/assets/standards.png?raw=true" width="600" alt="xkcd 927: standards proliferate" />
+  <br />
+  <sub><i>Every agent has its own format for skills, MCP, and AGENTS.md. <code>agent-install</code> writes to all of them so you don't ship the 15th. (<a href="https://xkcd.com/927/">xkcd 927</a>)</i></sub>
+</p>
 
 ## Install
-
-```bash
-npx agent-install --help
-```
-
-Or add it as a dependency:
 
 ```bash
 npm install agent-install
@@ -21,23 +21,111 @@ npm install agent-install
 
 ## Skills
 
-Install a `SKILL.md` file (the format that triggers behavior in Claude Code, Cursor, Codex, OpenCode, and others) from a local path, GitHub repo, or URL.
+A skill is a `SKILL.md` file that an agent picks up and uses to trigger behavior. `installSkillsFromSource` parses a source (local path, GitHub repo, or URL), fetches it, and installs every discovered `SKILL.md` into each selected agent's skills directory.
 
-```bash
-npx agent-install skill add ./skills/react-grab
-npx agent-install skill add owner/repo
-npx agent-install skill add https://github.com/owner/repo/tree/main/skills/foo
+```ts
+import { installSkillsFromSource } from "agent-install";
+
+const result = await installSkillsFromSource({
+  source: "./skills/react-grab",
+  agents: ["claude-code", "cursor"],
+});
+
+console.log(result.installed); // InstalledSkillRecord[]
+console.log(result.failed);    // FailedSkillRecord[]
 ```
 
-Other skill commands:
+Other useful exports:
 
-```bash
-npx agent-install skill init [name]      # create a new SKILL.md
-npx agent-install skill list             # list installed skills
-npx agent-install skill remove [skills]  # remove installed skills
+```ts
+import {
+  discoverSkills,
+  parseSkillSource,
+  installSkillForAgent,
+  detectInstalledSkillAgents,
+} from "agent-install";
 ```
 
-### Skill source formats
+## MCP servers
+
+An MCP server speaks the [Model Context Protocol](https://modelcontextprotocol.io/docs/develop/build-server). `installMcpServer` parses a source (remote URL, npm package, or raw command), builds an `McpServerConfig`, and writes it into each selected agent's native config file (JSON, JSONC, YAML, or TOML). JSONC writes preserve existing comments.
+
+```ts
+import { installMcpServer } from "agent-install/mcp";
+
+const result = installMcpServer({
+  source: "https://mcp.context7.com/mcp",
+  agents: ["cursor", "claude-code"],
+  name: "context7",
+});
+```
+
+```ts
+import { installMcpServer } from "agent-install/mcp";
+
+installMcpServer({
+  source: "@modelcontextprotocol/server-postgres",
+  agents: ["claude-code"],
+  name: "postgres",
+  env: { DATABASE_URL: process.env.DATABASE_URL ?? "" },
+});
+```
+
+Other useful exports:
+
+```ts
+import {
+  parseMcpSource,
+  buildMcpServerConfig,
+  listInstalledMcpServers,
+  removeMcpServer,
+} from "agent-install/mcp";
+```
+
+## AGENTS.md
+
+[AGENTS.md](https://agents.md/) is the open README-for-agents spec. The `agent-install/agents-md` surface lets you read, upsert, and remove sections in `AGENTS.md` and its per-agent variants (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`, `.windsurfrules`, etc.) without losing surrounding content.
+
+```ts
+import {
+  upsertAgentsMdSection,
+  removeAgentsMdSection,
+  symlinkClaudeToAgents,
+} from "agent-install/agents-md";
+
+upsertAgentsMdSection({
+  heading: "React Grab",
+  body: "Run `npx grab@latest` to set up React Grab.",
+  placement: "append",
+});
+
+await symlinkClaudeToAgents();
+```
+
+Other useful exports:
+
+```ts
+import {
+  readAgentsMd,
+  writeAgentsMd,
+  parseSections,
+  findSection,
+  resolveAgentsMdFilePath,
+} from "agent-install/agents-md";
+```
+
+## Subpath exports
+
+| Import                    | Surface                                               |
+| ------------------------- | ----------------------------------------------------- |
+| `agent-install`           | Skills (SKILL.md install, discovery, clone/URL fetch) |
+| `agent-install/skill`     | Alias of the root import                              |
+| `agent-install/mcp`       | MCP servers (install, list, remove across agents)     |
+| `agent-install/agents-md` | AGENTS.md manipulation and `CLAUDE.md` symlink helper |
+
+## Source formats
+
+### Skill sources
 
 ```
 ./skills/my-skill                             # local path
@@ -50,23 +138,7 @@ https://github.com/owner/repo/tree/main/skills/foo
 https://example.com/path/SKILL.md             # direct SKILL.md URL
 ```
 
-## MCP servers
-
-Install a [Model Context Protocol](https://modelcontextprotocol.io/docs/develop/build-server) server into each agent's native config. Works with remote URLs, npm packages, and raw commands.
-
-```bash
-npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
-npx agent-install mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
-```
-
-Other MCP commands:
-
-```bash
-npx agent-install mcp list           # list installed MCP servers
-npx agent-install mcp remove <name>  # remove by server name
-```
-
-### MCP source formats
+### MCP sources
 
 ```
 https://mcp.context7.com/mcp                  # remote HTTP
@@ -75,66 +147,45 @@ https://mcp.example.com/sse (+ --transport sse)
 "node /path/to/server.js --port 3000"         # raw command
 ```
 
-## AGENTS.md
+## CLI
 
-Manage [AGENTS.md](https://agents.md/) (and its per-agent variants like `CLAUDE.md`, `GEMINI.md`, `.cursor/rules/`).
+The package also ships an `agent-install` CLI for use outside of code (one-off installs, scripts, CI). It's a thin wrapper around the Node API.
+
+```bash
+npx agent-install --help
+```
+
+### Skills
+
+```bash
+npx agent-install skill add ./skills/react-grab
+npx agent-install skill add owner/repo
+npx agent-install skill add https://github.com/owner/repo/tree/main/skills/foo
+
+npx agent-install skill init [name]      # create a new SKILL.md
+npx agent-install skill list             # list installed skills
+npx agent-install skill remove [skills]  # remove installed skills
+```
+
+### MCP servers
+
+```bash
+npx agent-install mcp add https://mcp.context7.com/mcp -a cursor
+npx agent-install mcp add @modelcontextprotocol/server-postgres -a claude-code --env "DATABASE_URL=..."
+
+npx agent-install mcp list           # list installed MCP servers
+npx agent-install mcp remove <name>  # remove by server name
+```
+
+### AGENTS.md
 
 ```bash
 npx agent-install doc init
 npx agent-install doc set-section "Testing" --body "Run pnpm test"
+npx agent-install doc remove-section "Testing"
 npx agent-install doc symlink-claude
+npx agent-install doc read
 ```
-
-Other doc commands:
-
-```bash
-npx agent-install doc read                    # read and list sections
-npx agent-install doc remove-section <heading>  # remove a section
-```
-
-## Programmatic use
-
-The same package ships a Node API so you can call it from your own CLI or build script. React Grab, React Doctor, and other tools depend on this directly.
-
-```ts
-import { installSkillsFromSource } from "agent-install";
-
-await installSkillsFromSource({
-  source: "./skills/react-grab",
-  agents: ["claude-code", "cursor"],
-});
-```
-
-```ts
-import { installMcpServer } from "agent-install/mcp";
-
-installMcpServer({
-  source: "https://mcp.context7.com/mcp",
-  agents: ["cursor", "claude-code"],
-  name: "context7",
-});
-```
-
-```ts
-import { upsertAgentsMdSection, symlinkClaudeToAgents } from "agent-install/agents-md";
-
-upsertAgentsMdSection({
-  heading: "React Grab",
-  body: "Run `npx grab@latest` to set up React Grab.",
-  placement: "append",
-});
-
-await symlinkClaudeToAgents();
-```
-
-### Subpath exports
-
-| Import                    | Surface                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `agent-install`           | Skills (SKILL.md install, discovery, clone/URL fetch) |
-| `agent-install/skill`     | Alias of the root import                              |
-| `agent-install/mcp`       | MCP servers (install, list, remove across agents)     |
-| `agent-install/agents-md` | AGENTS.md manipulation and `CLAUDE.md` symlink helper |
 
 ## Supported agents
 
