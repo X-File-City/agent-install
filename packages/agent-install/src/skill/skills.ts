@@ -1,8 +1,9 @@
 import { readdir, readFile, stat } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 
 import { MAX_SEARCH_DEPTH, SKILL_MANIFEST_FILE, SKIP_DISCOVERY_DIRS } from "./constants.ts";
 import { parseFrontmatter } from "./frontmatter.ts";
+import { getPluginGroupings, getPluginSkillPaths } from "./plugin-manifest.ts";
 import type { Skill } from "./types.ts";
 import { isPathSafe } from "../utils/is-path-safe.ts";
 import { isPlainObject } from "../utils/is-plain-object.ts";
@@ -12,19 +13,50 @@ const PRIORITY_RELATIVE_PATHS: readonly string[] = [
   "",
   "skills",
   "skills/.curated",
+  "skills/.experimental",
+  "skills/.system",
   ".agents/skills",
+  ".aider-desk/skills",
+  ".augment/skills",
+  ".bob/skills",
   ".claude/skills",
-  ".cursor/skills",
+  ".cline/skills",
+  ".codeartsdoer/skills",
+  ".codebuddy/skills",
+  ".codemaker/skills",
+  ".codestudio/skills",
   ".codex/skills",
-  ".opencode/skills",
+  ".commandcode/skills",
+  ".continue/skills",
+  ".cortex/skills",
+  ".crush/skills",
+  ".cursor/skills",
+  ".devin/skills",
+  ".factory/skills",
+  ".forge/skills",
   ".gemini/skills",
   ".github/skills",
   ".goose/skills",
-  ".windsurf/skills",
-  ".roo/skills",
-  ".cline/skills",
+  ".iflow/skills",
+  ".junie/skills",
   ".kilocode/skills",
-  ".factory/skills",
+  ".kiro/skills",
+  ".kode/skills",
+  ".mcpjam/skills",
+  ".mux/skills",
+  ".neovate/skills",
+  ".openhands/skills",
+  ".pi/skills",
+  ".pochi/skills",
+  ".qoder/skills",
+  ".qwen/skills",
+  ".roo/skills",
+  ".rovodev/skills",
+  ".tabnine/agent/skills",
+  ".trae/skills",
+  ".vibe/skills",
+  ".windsurf/skills",
+  ".zencoder/skills",
 ];
 
 const hasSkillManifest = async (dir: string): Promise<boolean> => {
@@ -103,18 +135,29 @@ export const discoverSkills = async (
   const seenNames = new Set<string>();
   const results: Skill[] = [];
 
+  const pluginGroupings = await getPluginGroupings(searchPath);
+  const enhanceSkill = (skill: Skill): Skill => {
+    const pluginName = pluginGroupings.get(resolve(skill.path));
+    return pluginName ? { ...skill, pluginName } : skill;
+  };
+
+  const pluginExtraDirs = await getPluginSkillPaths(searchPath);
+
   if (await hasSkillManifest(searchPath)) {
     const skill = await parseSkillManifest(join(searchPath, SKILL_MANIFEST_FILE));
     if (skill) {
-      results.push(skill);
+      results.push(enhanceSkill(skill));
       seenNames.add(skill.name);
       if (!options?.fullDepth) return results;
     }
   }
 
-  const prioritySearchDirs = PRIORITY_RELATIVE_PATHS.map((relative) =>
-    relative ? join(searchPath, relative) : searchPath,
-  );
+  const prioritySearchDirs = [
+    ...PRIORITY_RELATIVE_PATHS.map((relative) =>
+      relative ? join(searchPath, relative) : searchPath,
+    ),
+    ...pluginExtraDirs,
+  ];
 
   for (const dir of prioritySearchDirs) {
     try {
@@ -126,7 +169,7 @@ export const discoverSkills = async (
 
         const skill = await parseSkillManifest(join(skillDir, SKILL_MANIFEST_FILE));
         if (skill && !seenNames.has(skill.name)) {
-          results.push(skill);
+          results.push(enhanceSkill(skill));
           seenNames.add(skill.name);
         }
       }
@@ -138,7 +181,7 @@ export const discoverSkills = async (
     for (const skillDir of allSkillDirs) {
       const skill = await parseSkillManifest(join(skillDir, SKILL_MANIFEST_FILE));
       if (skill && !seenNames.has(skill.name)) {
-        results.push(skill);
+        results.push(enhanceSkill(skill));
         seenNames.add(skill.name);
       }
     }

@@ -167,6 +167,57 @@ describe("CLI: skill", () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout.toLowerCase()).toContain("no installed skills");
     });
+
+    it("does not double-list canonical skills under every undetected universal agent", async () => {
+      await writeSkillFixture(workspace.cwd, "shared-skill");
+      await runCli(["skill", "add", "./shared-skill", "-a", "claude-code", "-y"], {
+        cwd: workspace.cwd,
+        env: workspace.env,
+      });
+
+      const result = await runCli(["skill", "list", "--json"], {
+        cwd: workspace.cwd,
+        env: workspace.env,
+      });
+      expect(result.exitCode).toBe(0);
+
+      const parsed = JSON.parse(result.stdout) as Array<{ skill: string; agent: string }>;
+      const agents = parsed
+        .filter((entry) => entry.skill === "shared-skill")
+        .map((entry) => entry.agent);
+
+      expect(agents).toContain("universal");
+      expect(agents).toContain("claude-code");
+      // Universal agents (cursor, codex, opencode, …) and undetected non-universal
+      // agents (droid, kilo, roo, …) must not appear individually for a skill that
+      // only lives in the canonical dir + claude-code's symlink.
+      for (const undetected of ["cursor", "codex", "opencode", "amp", "droid", "roo"]) {
+        expect(agents).not.toContain(undetected);
+      }
+    });
+
+    it("surfaces ghost skills left behind in an agent dir after the agent was removed", async () => {
+      await writeSkillFixture(workspace.cwd, "ghost-skill");
+      await runCli(["skill", "add", "./ghost-skill", "-a", "kilo", "-y"], {
+        cwd: workspace.cwd,
+        env: workspace.env,
+      });
+
+      // Kilo is non-universal and not detected (no ~/.kilocode in the isolated home),
+      // so it only shows up because its project-local skills dir is non-empty.
+      expect(existsSync(join(workspace.cwd, ".kilocode", "skills", "ghost-skill"))).toBe(true);
+
+      const result = await runCli(["skill", "list", "--json"], {
+        cwd: workspace.cwd,
+        env: workspace.env,
+      });
+      const parsed = JSON.parse(result.stdout) as Array<{ skill: string; agent: string }>;
+      const agents = parsed
+        .filter((entry) => entry.skill === "ghost-skill")
+        .map((entry) => entry.agent);
+
+      expect(agents).toContain("kilo");
+    });
   });
 
   describe("remove", () => {

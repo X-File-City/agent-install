@@ -8,6 +8,7 @@ import {
   detectInstalledSkillAgents,
   discoverSkills,
   fetchSkillManifestFromUrl,
+  fetchWellKnownSkills,
   filterSkillsByName,
   getUniversalSkillAgents,
   installSkillsFromSource,
@@ -82,6 +83,9 @@ const listSkillsInSource = async (source: string): Promise<void> => {
       basePath = parsed.localPath ?? parsed.url;
     } else if (parsed.type === "url") {
       basePath = await fetchSkillManifestFromUrl(parsed.url);
+      cleanup = () => cleanupTempDir(basePath);
+    } else if (parsed.type === "well-known") {
+      basePath = await fetchWellKnownSkills(parsed.url);
       cleanup = () => cleanupTempDir(basePath);
     } else {
       basePath = await cloneRepo(parsed.url, parsed.ref);

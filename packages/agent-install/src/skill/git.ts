@@ -115,7 +115,14 @@ export const cloneRepo = async (url: string, ref?: string): Promise<string> => {
   if (timedOut) {
     const seconds = Math.round(timeoutMs / MS_PER_SECOND);
     throw new GitCloneError(
-      `Clone timed out after ${seconds}s. Set ${CLONE_TIMEOUT_ENV_VAR} to raise the limit.`,
+      [
+        `Clone timed out after ${seconds}s. Common causes:`,
+        `  - Large repository: raise the timeout with ${CLONE_TIMEOUT_ENV_VAR}=600000 (10m)`,
+        `  - Slow network: retry, or clone manually and pass the local path to 'skill add'`,
+        `  - Private repo without credentials:`,
+        `      - For SSH: ssh-add -l (to check loaded keys)`,
+        `      - For HTTPS: gh auth status (if using GitHub CLI)`,
+      ].join("\n"),
       url,
       "timeout",
     );
@@ -123,7 +130,12 @@ export const cloneRepo = async (url: string, ref?: string): Promise<string> => {
 
   if (isAuthErrorMessage(stderr)) {
     throw new GitCloneError(
-      `Authentication failed for ${url}. Check credentials or SSH keys.`,
+      [
+        `Authentication failed for ${url}.`,
+        `  - For private repos, ensure you have access`,
+        `  - For SSH: check your keys with 'ssh -T git@github.com'`,
+        `  - For HTTPS: run 'gh auth login' or configure git credentials`,
+      ].join("\n"),
       url,
       "auth",
     );

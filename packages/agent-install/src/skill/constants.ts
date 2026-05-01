@@ -26,3 +26,9 @@ export const COPY_EXCLUDE_DIRS: ReadonlySet<string> = new Set([
   "__pycache__",
   "__pypackages__",
 ]);
+
+export const WELL_KNOWN_INDEX_FILE = "index.json";
+export const WELL_KNOWN_PATHS: readonly string[] = [
+  ".well-known/agent-skills",
+  ".well-known/skills",
+];

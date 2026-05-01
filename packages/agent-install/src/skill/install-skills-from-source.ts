@@ -1,5 +1,6 @@
 import { detectInstalledSkillAgents, getUniversalSkillAgents } from "./agents.ts";
 import { fetchSkillManifestFromUrl } from "./fetch-url.ts";
+import { fetchWellKnownSkills } from "./fetch-well-known.ts";
 import { cleanupTempDir, cloneRepo } from "./git.ts";
 import { installSkillForAgent } from "./installer.ts";
 import { discoverSkills, filterSkillsByName } from "./skills.ts";
@@ -30,6 +31,15 @@ const resolveSource = async (parsed: ParsedSkillSource): Promise<ResolvedSource>
   if (parsed.type === "url") {
     const baseDir = await fetchSkillManifestFromUrl(parsed.url);
     return { basePath: baseDir, cleanup: () => cleanupTempDir(baseDir) };
+  }
+
+  if (parsed.type === "well-known") {
+    const baseDir = await fetchWellKnownSkills(parsed.url);
+    return {
+      basePath: baseDir,
+      skillFilter: parsed.skillFilter,
+      cleanup: () => cleanupTempDir(baseDir),
+    };
   }
 
   const cloneDir = await cloneRepo(parsed.url, parsed.ref);

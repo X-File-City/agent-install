@@ -11,7 +11,9 @@ export {
 } from "./agents.ts";
 export { CANONICAL_SKILLS_DIR, SKILL_MANIFEST_FILE } from "./constants.ts";
 export { fetchSkillManifestFromUrl } from "./fetch-url.ts";
+export { fetchWellKnownSkills } from "./fetch-well-known.ts";
 export { parseFrontmatter } from "./frontmatter.ts";
+export { getPluginGroupings, getPluginSkillPaths } from "./plugin-manifest.ts";
 export { GitCloneError, cleanupTempDir, cloneRepo } from "./git.ts";
 export {
   installSkillsFromSource,

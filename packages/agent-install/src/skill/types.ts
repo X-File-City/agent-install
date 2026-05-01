@@ -1,20 +1,60 @@
 export type SkillAgentType =
+  | "adal"
+  | "aider-desk"
+  | "amp"
+  | "antigravity"
+  | "augment"
+  | "bob"
   | "claude-code"
+  | "cline"
+  | "codearts-agent"
+  | "codebuddy"
+  | "codemaker"
+  | "codestudio"
   | "codex"
+  | "command-code"
+  | "continue"
+  | "cortex"
+  | "crush"
   | "cursor"
+  | "deepagents"
+  | "devin"
+  | "dexto"
   | "droid"
+  | "firebender"
+  | "forgecode"
   | "gemini-cli"
   | "github-copilot"
   | "goose"
-  | "opencode"
-  | "pi"
-  | "windsurf"
-  | "roo"
-  | "cline"
+  | "iflow-cli"
+  | "junie"
   | "kilo"
-  | "universal";
+  | "kimi-cli"
+  | "kiro-cli"
+  | "kode"
+  | "mcpjam"
+  | "mistral-vibe"
+  | "mux"
+  | "neovate"
+  | "openclaw"
+  | "opencode"
+  | "openhands"
+  | "pi"
+  | "pochi"
+  | "qoder"
+  | "qwen-code"
+  | "replit"
+  | "roo"
+  | "rovodev"
+  | "tabnine-cli"
+  | "trae"
+  | "trae-cn"
+  | "universal"
+  | "warp"
+  | "windsurf"
+  | "zencoder";
 
-export type SkillSourceType = "local" | "github" | "gitlab" | "git" | "url";
+export type SkillSourceType = "local" | "github" | "gitlab" | "git" | "url" | "well-known";
 
 export type InstallMode = "symlink" | "copy";
 
@@ -33,6 +73,7 @@ export interface Skill {
   path: string;
   rawContent: string;
   metadata?: Record<string, unknown>;
+  pluginName?: string;
 }
 
 export interface SkillAgentConfig {

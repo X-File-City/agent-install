@@ -81,26 +81,26 @@ describe("parseSkillSource: gitlab sources", () => {
 });
 
 describe("parseSkillSource: hostname spoofing protection", () => {
-  it("does NOT mis-parse a lookalike domain like example-github.com as github", () => {
+  it("treats a lookalike domain like example-github.com as well-known (not github)", () => {
     const result = parseSkillSource("https://example-github.com/owner/repo");
-    expect(result.type).toBe("git");
+    expect(result.type).toBe("well-known");
     expect(result.url).toBe("https://example-github.com/owner/repo");
   });
 
-  it("does NOT mis-parse my-github.com/owner/repo/tree/main as github", () => {
+  it("treats my-github.com/owner/repo/tree/main as well-known (not github)", () => {
     const result = parseSkillSource("https://my-github.com/owner/repo/tree/main");
-    expect(result.type).toBe("git");
+    expect(result.type).toBe("well-known");
   });
 
-  it("does NOT mis-parse github.com.evil.com as github", () => {
+  it("treats github.com.evil.com as well-known (not github)", () => {
     const result = parseSkillSource("https://github.com.evil.com/owner/repo");
-    expect(result.type).toBe("git");
+    expect(result.type).toBe("well-known");
     expect(result.url).toBe("https://github.com.evil.com/owner/repo");
   });
 
-  it("does NOT mis-parse a lookalike domain like fake-gitlab.com as gitlab", () => {
+  it("treats a lookalike domain like fake-gitlab.com as well-known (not gitlab)", () => {
     const result = parseSkillSource("https://fake-gitlab.com/owner/repo");
-    expect(result.type).toBe("git");
+    expect(result.type).toBe("well-known");
   });
 });
 

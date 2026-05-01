@@ -59,4 +59,23 @@ describe("parseSkillSource (skill)", () => {
       url: "https://example.com/docs/SKILL.md",
     });
   });
+
+  it("treats unknown HTTPS URLs without .git/SKILL.md as well-known sources", () => {
+    expect(parseSkillSource("https://docs.example.com")).toMatchObject({
+      type: "well-known",
+      url: "https://docs.example.com",
+    });
+    expect(parseSkillSource("https://docs.example.com/.well-known/agent-skills/foo")).toMatchObject(
+      {
+        type: "well-known",
+      },
+    );
+  });
+
+  it("does not classify .git URLs or raw.githubusercontent.com as well-known", () => {
+    expect(parseSkillSource("https://git.example.com/owner/repo.git").type).toBe("git");
+    expect(parseSkillSource("https://raw.githubusercontent.com/foo/bar/main/SKILL.md").type).toBe(
+      "url",
+    );
+  });
 });

@@ -1,14 +1,19 @@
-import { readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { readdir, stat } from "node:fs/promises";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 
 import { Command } from "commander";
 import pc from "picocolors";
 
 import {
   CANONICAL_SKILLS_DIR,
+  detectInstalledSkillAgents,
   discoverSkills,
   getSkillAgentDir,
   getSkillAgentTypes,
+  isUniversalSkillAgent,
+  skillAgents,
   type SkillAgentType,
 } from "../../../skill/index.ts";
 import { toErrorMessage } from "../../../utils/to-error-message.ts";
@@ -28,18 +33,31 @@ interface ListEntry {
   path: string;
 }
 
-const collectEntries = async (
-  agentType: SkillAgentType,
-  isGlobal: boolean,
-  cwd: string,
-): Promise<ListEntry[]> => {
-  const baseDir = getSkillAgentDir(agentType, { global: isGlobal, cwd });
-  const entries = await readdir(baseDir, { withFileTypes: true }).catch(() => []);
+const isUsableEntry = async (
+  entry: { isDirectory(): boolean; isSymbolicLink(): boolean },
+  fullPath: string,
+): Promise<boolean> => {
+  if (entry.isDirectory()) return true;
+  if (!entry.isSymbolicLink()) return false;
+  // Symlinks need their target verified — broken or file-pointing symlinks should be skipped.
+  try {
+    return (await stat(fullPath)).isDirectory();
+  } catch {
+    return false;
+  }
+};
 
+const scanSkillsInDir = async (
+  baseDir: string,
+  agentType: SkillAgentType,
+): Promise<ListEntry[]> => {
+  const entries = await readdir(baseDir, { withFileTypes: true }).catch(() => []);
   const results: ListEntry[] = [];
+
   for (const entry of entries) {
-    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
     const skillDir = join(baseDir, entry.name);
+    if (!(await isUsableEntry(entry, skillDir))) continue;
+
     const skills = await discoverSkills(skillDir);
     for (const skill of skills) {
       results.push({
@@ -50,28 +68,60 @@ const collectEntries = async (
       });
     }
   }
+
   return results;
 };
 
-const collectCanonicalEntries = async (cwd: string): Promise<ListEntry[]> => {
-  const canonicalBase = join(cwd, CANONICAL_SKILLS_DIR);
-  const entries = await readdir(canonicalBase, { withFileTypes: true }).catch(() => []);
-
-  const results: ListEntry[] = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
-    const skillDir = join(canonicalBase, entry.name);
-    const skills = await discoverSkills(skillDir);
-    for (const skill of skills) {
-      results.push({
-        skill: skill.name,
-        agent: "universal",
-        description: skill.description,
-        path: skill.path,
-      });
-    }
+const dirExists = (path: string): boolean => {
+  try {
+    return existsSync(path);
+  } catch {
+    return false;
   }
-  return results;
+};
+
+const getCanonicalDir = (isGlobal: boolean, cwd: string): string =>
+  isGlobal ? join(homedir(), CANONICAL_SKILLS_DIR) : join(cwd, CANONICAL_SKILLS_DIR);
+
+const collectListEntries = async (options: {
+  isGlobal: boolean;
+  cwd: string;
+  filter?: SkillAgentType[];
+}): Promise<ListEntry[]> => {
+  const { isGlobal, cwd, filter } = options;
+  const allEntries: ListEntry[] = [];
+  const visitedDirs = new Set<string>();
+
+  const visit = async (dir: string, agent: SkillAgentType): Promise<void> => {
+    if (visitedDirs.has(dir)) return;
+    visitedDirs.add(dir);
+    allEntries.push(...(await scanSkillsInDir(dir, agent)));
+  };
+
+  if (filter) {
+    for (const agentType of filter) {
+      const baseDir = getSkillAgentDir(agentType, { global: isGlobal, cwd });
+      await visit(baseDir, agentType);
+    }
+    return allEntries;
+  }
+
+  await visit(getCanonicalDir(isGlobal, cwd), "universal");
+
+  const installedAgents = new Set(await detectInstalledSkillAgents());
+
+  for (const agentType of getSkillAgentTypes()) {
+    if (agentType === "universal") continue;
+    if (isUniversalSkillAgent(agentType)) continue;
+
+    const baseDir = getSkillAgentDir(agentType, { global: isGlobal, cwd });
+    // Only scan a non-universal agent's dir when the agent is actually installed
+    // OR has a leftover skills folder on disk (catches ghost installs after uninstall).
+    if (!installedAgents.has(agentType) && !dirExists(baseDir)) continue;
+    await visit(baseDir, agentType);
+  }
+
+  return allEntries;
 };
 
 export const skillListCommand = new Command("list")
@@ -86,16 +136,7 @@ export const skillListCommand = new Command("list")
       const isGlobal = Boolean(options.global);
       const filter = parseSkillAgentList(options.agent);
 
-      const allEntries: ListEntry[] = [];
-      if (!isGlobal && !filter) {
-        allEntries.push(...(await collectCanonicalEntries(cwd)));
-      }
-
-      const targetAgents = filter ?? getSkillAgentTypes();
-      for (const agentType of targetAgents) {
-        if (agentType === "universal") continue;
-        allEntries.push(...(await collectEntries(agentType, isGlobal, cwd)));
-      }
+      const allEntries = await collectListEntries({ isGlobal, cwd, filter });
 
       if (options.json) {
         console.log(JSON.stringify(allEntries, null, 2));
@@ -114,12 +155,16 @@ export const skillListCommand = new Command("list")
         bySkill.set(entry.skill, existing);
       }
 
+      const formatAgent = (agent: SkillAgentType): string =>
+        agent === "universal" ? "canonical" : skillAgents[agent].displayName;
+
       for (const [skillName, entries] of bySkill) {
         const first = entries[0];
         if (!first) continue;
-        const agentLabels = entries.map((entry) => entry.agent).join(", ");
+        const agentLabels = Array.from(new Set(entries.map((entry) => formatAgent(entry.agent))));
+        const description = first.description || basename(first.path);
         console.log(
-          `  ${pc.bold(skillName)} ${pc.dim(`[${agentLabels}]`)}\n    ${pc.dim(first.description)}`,
+          `  ${pc.bold(skillName)} ${pc.dim(`[${agentLabels.join(", ")}]`)}\n    ${pc.dim(description)}`,
         );
       }
     } catch (error) {

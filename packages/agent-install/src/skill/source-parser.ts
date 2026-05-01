@@ -171,6 +171,27 @@ const parseFragmentRef = (input: string): FragmentRefResult => {
 const isDirectSkillMdUrl = (input: string): boolean =>
   /^https?:\/\//.test(input) && /\bSKILL\.md(?:$|\?|#)/i.test(input);
 
+const EXCLUDED_WELL_KNOWN_HOSTS = new Set(["raw.githubusercontent.com"]);
+
+// We deliberately do NOT verify the index exists here; that happens lazily at install time.
+const isWellKnownCandidate = (input: string): boolean => {
+  if (!/^https?:\/\//.test(input)) return false;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(input);
+  } catch {
+    return false;
+  }
+
+  if (HOST_BY_DOMAIN.has(parsed.hostname)) return false;
+  if (EXCLUDED_WELL_KNOWN_HOSTS.has(parsed.hostname)) return false;
+  if (input.endsWith(".git")) return false;
+  if (isDirectSkillMdUrl(input)) return false;
+
+  return true;
+};
+
 const parseHostedShorthand = (
   rest: string,
   host: Host,
@@ -314,6 +335,12 @@ export const parseSkillSource = (input: string): ParsedSkillSource => {
   if (isShorthandCandidate(normalized)) {
     const result = parseHostedShorthand(normalized, "github", fragmentRef, fragmentSkillFilter);
     if (result) return result;
+  }
+
+  if (isWellKnownCandidate(normalized)) {
+    const wellKnownResult: ParsedSkillSource = { type: "well-known", url: normalized };
+    if (fragmentSkillFilter) wellKnownResult.skillFilter = fragmentSkillFilter;
+    return wellKnownResult;
   }
 
   const result: ParsedSkillSource = { type: "git", url: normalized };

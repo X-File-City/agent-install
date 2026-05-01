@@ -225,7 +225,14 @@ git@bitbucket.org:owner/repo.git
 
 # Direct SKILL.md URL
 https://example.com/path/SKILL.md
+
+# Well-known skills endpoint (RFC 8615)
+# Auto-discovers /.well-known/agent-skills/index.json (or /.well-known/skills/ as fallback)
+https://docs.example.com
+https://docs.example.com/.well-known/agent-skills/my-skill   # specific skill
 ```
+
+`skill.add` also reads `.claude-plugin/marketplace.json` and `.claude-plugin/plugin.json` from any cloned source, so skills declared by Claude Code plugin manifests are picked up automatically and tagged with their parent plugin name.
 
 ### MCP sources
 
@@ -238,11 +245,13 @@ https://mcp.example.com/sse (+ transport: "sse")
 
 ## Supported agents
 
-| Surface   | Agents                                                                                                                                              |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Skills    | Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Goose, Windsurf, Roo, Cline, Kilo, Factory Droid, Pi, universal                   |
-| MCP       | Claude Code, Claude Desktop, Cursor, Codex, Cline (ext + CLI), VS Code, GitHub Copilot CLI, Gemini CLI, Goose, OpenCode, Zed, Antigravity, MCPorter |
-| AGENTS.md | Universal, Claude Code (CLAUDE.md), Gemini CLI (GEMINI.md), Cursor (.cursor/rules), Windsurf (.windsurfrules), Codex, OpenCode, Aider               |
+| Surface   | Agents                                                                                                                                                                                                                                         |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skills    | 52 agents incl. Claude Code, Cursor, Codex, OpenCode, Gemini CLI, GitHub Copilot, Amp, Antigravity, Augment, Cline, Continue, Crush, Factory Droid, Goose, Junie, Kilo, Kiro CLI, OpenClaw, Pi, Roo, Trae, Warp, Windsurf, Zencoder, universal |
+| MCP       | Claude Code, Claude Desktop, Cursor, Codex, Cline (ext + CLI), VS Code, GitHub Copilot CLI, Gemini CLI, Goose, OpenCode, Zed, Antigravity, MCPorter                                                                                            |
+| AGENTS.md | Universal, Claude Code (CLAUDE.md), Gemini CLI (GEMINI.md), Cursor (.cursor/rules), Windsurf (.windsurfrules), Codex, OpenCode, Aider                                                                                                          |
+
+The full list of skill agents lives in [`packages/agent-install/src/skill/agents.ts`](./packages/agent-install/src/skill/agents.ts). Pass `-a <name>` to target specific agents (or `-a '*'` for all).
 
 ## Development
 
